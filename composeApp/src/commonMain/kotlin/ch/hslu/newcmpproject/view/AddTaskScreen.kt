@@ -2,6 +2,7 @@ package ch.hslu.newcmpproject.view
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
@@ -24,7 +25,7 @@ import ch.hslu.newcmpproject.viewmodel.TaskViewModel
 import kotlinx.datetime.LocalDateTime
 
 @Composable
-fun AddTaskScreen(taskViewModel: TaskViewModel) {
+fun AddTaskScreen(taskViewModel: TaskViewModel, paddingValues: PaddingValues) {
     var title by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
     var date by remember { mutableStateOf("") }
@@ -33,7 +34,7 @@ fun AddTaskScreen(taskViewModel: TaskViewModel) {
 
     Column(
         modifier = Modifier.fillMaxWidth()
-            .padding(16.dp),
+            .padding(16.dp).padding(paddingValues),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
 

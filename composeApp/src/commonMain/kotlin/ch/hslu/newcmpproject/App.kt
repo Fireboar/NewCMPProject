@@ -22,6 +22,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import ch.hslu.newcmpproject.view.AddTaskScreen
 import ch.hslu.newcmpproject.view.KanbanScreen
+import ch.hslu.newcmpproject.view.Navigation
 import ch.hslu.newcmpproject.viewmodel.TaskViewModel
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
@@ -34,7 +35,7 @@ import newcmpproject.composeapp.generated.resources.compose_multiplatform
 fun App() {
     val taskViewModel = TaskViewModel()
     MaterialTheme {
-        KanbanScreen(taskViewModel)
+        Navigation(taskViewModel)
     }
 }
 
