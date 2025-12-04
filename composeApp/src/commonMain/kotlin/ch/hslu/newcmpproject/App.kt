@@ -20,6 +20,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import ch.hslu.newcmpproject.view.AddTaskScreen
+import ch.hslu.newcmpproject.viewmodel.TaskViewModel
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
@@ -29,15 +31,10 @@ import newcmpproject.composeapp.generated.resources.compose_multiplatform
 @Composable
 @Preview
 fun App() {
-    CustomTheme {
-        Column (Modifier.padding(top = 24.dp)) {
-            Text("Hallo Welt", style = MaterialTheme.typography.bodyLarge)
-            Text("Hallo Welt",
-                style = MaterialTheme.typography.titleLarge,
-                color = MaterialTheme.colorScheme.primary
-            )
-        }
+    val taskViewModel = TaskViewModel()
+    MaterialTheme {
+        AddTaskScreen(taskViewModel)
     }
 }
 
-//Test
+
