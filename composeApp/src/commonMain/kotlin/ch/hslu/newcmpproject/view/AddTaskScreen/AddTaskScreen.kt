@@ -1,4 +1,4 @@
-package ch.hslu.newcmpproject.view
+package ch.hslu.newcmpproject.view.AddTaskScreen
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column

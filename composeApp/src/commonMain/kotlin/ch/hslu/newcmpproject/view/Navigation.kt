@@ -6,9 +6,15 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import ch.hslu.newcmpproject.view.AddTaskScreen.AddTaskScreen
+import ch.hslu.newcmpproject.view.AddTaskScreen.AddTaskScreenDesktopWeb
 import ch.hslu.newcmpproject.view.bars.BottomNavigationBar
 import ch.hslu.newcmpproject.view.bars.TopBar
 import ch.hslu.newcmpproject.viewmodel.TaskViewModel
+
+enum class PlatformType { ANDROID, IOS, DESKTOP, WEB }
+
+expect fun getPlatform(): PlatformType
 
 enum class ScreenType { KANBAN, ADDTASK}
 
@@ -46,10 +52,13 @@ fun Navigation(taskViewModel: TaskViewModel) {
                 paddingValues
             )
 
-            ScreenType.ADDTASK -> AddTaskScreen(
-                taskViewModel = taskViewModel,
-                paddingValues
-            )
+            ScreenType.ADDTASK -> {
+                when (getPlatform()) {
+                    PlatformType.DESKTOP, PlatformType.WEB -> AddTaskScreenDesktopWeb(taskViewModel, paddingValues)
+                    else -> AddTaskScreen(taskViewModel, paddingValues)
+                }
+            }
+
         }
 
     }
