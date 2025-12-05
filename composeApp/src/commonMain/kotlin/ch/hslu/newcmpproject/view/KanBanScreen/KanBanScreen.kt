@@ -1,4 +1,4 @@
-package ch.hslu.newcmpproject.view
+package ch.hslu.newcmpproject.view.KanBanScreen
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
@@ -63,6 +63,19 @@ fun KanbanScreen(
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Text(text = status, style = MaterialTheme.typography.titleMedium)
+                    tasks.filter { it.status == status }
+                        .forEach { task ->
+                            DraggableTaskItem(
+                                task = task,
+                                columnWidthDp = COLUMN_WIDTH_DP,
+                                onDelete = { taskViewModel.deleteTask(task) },
+                                onMove = {
+                                        targetStatus ->
+                                    taskViewModel.moveTask(task, targetStatus)
+                                }
+                            )
+                        }
+
                 }
             }
         }

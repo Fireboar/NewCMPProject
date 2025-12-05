@@ -33,4 +33,11 @@ class TaskViewModel () : ViewModel(){
         _tasks.value = _tasks.value - task
     }
 
+    fun moveTask(task: Task, targetStatus: String) {
+        val updatedTask = task.copy(status = targetStatus)
+        _tasks.value = _tasks.value.map {
+            if (it.id == task.id) updatedTask else it
+        }
+    }
+
 }

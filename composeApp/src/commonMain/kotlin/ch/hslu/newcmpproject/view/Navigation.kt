@@ -8,6 +8,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import ch.hslu.newcmpproject.view.AddTaskScreen.AddTaskScreen
 import ch.hslu.newcmpproject.view.AddTaskScreen.AddTaskScreenDesktopWeb
+import ch.hslu.newcmpproject.view.KanBanScreen.KanbanScreen
 import ch.hslu.newcmpproject.view.bars.BottomNavigationBar
 import ch.hslu.newcmpproject.view.bars.TopBar
 import ch.hslu.newcmpproject.viewmodel.TaskViewModel
