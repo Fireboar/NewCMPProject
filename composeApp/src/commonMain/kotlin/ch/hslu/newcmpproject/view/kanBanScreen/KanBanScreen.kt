@@ -20,6 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import ch.hslu.newcmpproject.model.Task
+import ch.hslu.newcmpproject.model.toLocalDateTimeOrNull
 import ch.hslu.newcmpproject.viewmodel.TaskViewModel
 
 
@@ -66,6 +67,7 @@ fun KanbanScreen(
                 ) {
                     Text(text = status, style = MaterialTheme.typography.titleMedium)
                     tasks.filter { it.status == status }
+                        .sortedBy { it.toLocalDateTimeOrNull() }
                         .forEach { task ->
                             DraggableTaskItem(
                                 task = task,
