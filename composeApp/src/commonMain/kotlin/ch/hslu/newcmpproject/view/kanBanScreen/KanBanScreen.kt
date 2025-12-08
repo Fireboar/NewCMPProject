@@ -1,4 +1,4 @@
-package ch.hslu.newcmpproject.view.KanBanScreen
+package ch.hslu.newcmpproject.view.kanBanScreen
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
@@ -19,6 +19,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import ch.hslu.newcmpproject.model.Task
 import ch.hslu.newcmpproject.viewmodel.TaskViewModel
 
 
@@ -28,7 +29,8 @@ val COLUMN_WIDTH_DP = 300.dp
 @Composable
 fun KanbanScreen(
     taskViewModel: TaskViewModel,
-    paddingValues: PaddingValues
+    paddingValues: PaddingValues,
+    onTaskClick: (Task) -> Unit
 ) {
     val tasks by taskViewModel.tasks.collectAsState()
     val horizontalScroll = rememberScrollState()
@@ -72,7 +74,8 @@ fun KanbanScreen(
                                 onMove = {
                                         targetStatus ->
                                     taskViewModel.moveTask(task, targetStatus)
-                                }
+                                },
+                                onClick = { onTaskClick(task) }
                             )
                         }
 

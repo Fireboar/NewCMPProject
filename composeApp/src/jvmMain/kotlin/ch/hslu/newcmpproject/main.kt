@@ -5,7 +5,7 @@ import androidx.compose.ui.unit.times
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
-import ch.hslu.newcmpproject.view.KanBanScreen.COLUMN_WIDTH_DP
+import ch.hslu.newcmpproject.view.kanBanScreen.COLUMN_WIDTH_DP
 
 fun main() = application {
     Window(

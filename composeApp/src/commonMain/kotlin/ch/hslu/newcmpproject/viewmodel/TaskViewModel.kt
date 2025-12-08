@@ -40,4 +40,10 @@ class TaskViewModel () : ViewModel(){
         }
     }
 
+    fun updateTask(updatedTask: Task) {
+        _tasks.value = _tasks.value.map { task ->
+            if (task.id == updatedTask.id) updatedTask else task
+        }
+    }
+
 }
