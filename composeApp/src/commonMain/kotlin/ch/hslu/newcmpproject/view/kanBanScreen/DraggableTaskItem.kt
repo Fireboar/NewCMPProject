@@ -27,7 +27,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
-import ch.hslu.newcmpproject.model.Task
+import ch.hslu.newcmpproject.entity.Task
 import kotlin.math.roundToInt
 
 @Composable

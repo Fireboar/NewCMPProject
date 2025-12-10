@@ -1,15 +1,26 @@
-package ch.hslu.newcmpproject.model
+package ch.hslu.newcmpproject.entity
 
 import kotlinx.datetime.LocalDateTime
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
+@Serializable
 data class Task(
-    val id: Int,
+    @SerialName("id")
+    val id: Int = 0,
+    @SerialName("title")
     val title: String,
+    @SerialName("description")
     val description: String,
+    @SerialName("dueDate")
     val dueDate: String,
+    @SerialName("dueTime")
     val dueTime: String,
+    @SerialName("status")
     val status: String = "To Do"
 )
+
+
 
 
 fun Task.toLocalDateTimeOrNull(): LocalDateTime? {

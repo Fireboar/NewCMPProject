@@ -1,15 +1,20 @@
 package ch.hslu.newcmpproject.view
 
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
+import ch.hslu.newcmpproject.model.SyncMessage
 import ch.hslu.newcmpproject.view.addTaskScreen.AddTaskScreen
 import ch.hslu.newcmpproject.view.addTaskScreen.AddTaskScreenDesktopWeb
 import ch.hslu.newcmpproject.view.kanBanScreen.KanbanScreen
 import ch.hslu.newcmpproject.view.bars.BottomNavigationBar
+import ch.hslu.newcmpproject.view.bars.SuccessMessage
 import ch.hslu.newcmpproject.view.bars.TopBar
 import ch.hslu.newcmpproject.view.taskDetailScreen.TaskDetailScreen
 import ch.hslu.newcmpproject.view.taskDetailScreen.TaskDetailScreenDesktopWeb
@@ -45,12 +50,17 @@ fun Navigation(taskViewModel: TaskViewModel) {
             }
         },
         bottomBar = {
-            BottomNavigationBar(
-                currentScreen = currentScreen,
-                onNavigate = { screen ->
-                    navigateTo(screen)
-                }
-            )
+            Column (Modifier.fillMaxWidth()) {
+
+                SuccessMessage(taskViewModel)
+
+                BottomNavigationBar(
+                    currentScreen = currentScreen,
+                    onNavigate = { screen ->
+                        navigateTo(screen)
+                    }
+                )
+            }
         }
     ) { paddingValues ->
         when (currentScreen) {

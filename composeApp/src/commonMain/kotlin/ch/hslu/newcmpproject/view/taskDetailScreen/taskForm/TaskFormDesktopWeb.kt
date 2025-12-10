@@ -34,7 +34,7 @@ import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.unit.dp
-import ch.hslu.newcmpproject.model.Task
+import ch.hslu.newcmpproject.entity.Task
 import ch.hslu.newcmpproject.viewmodel.TaskViewModel
 import kotlinx.datetime.LocalDateTime
 

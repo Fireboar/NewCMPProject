@@ -1,0 +1,37 @@
+CREATE TABLE IF NOT EXISTS Tasks (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    title TEXT NOT NULL,
+    description TEXT,
+    dueDate TEXT NOT NULL,
+    dueTime TEXT NOT NULL,
+    status TEXT
+);
+
+insertTask:
+INSERT INTO Tasks(title, description, dueDate, dueTime, status)
+VALUES( ?, ?, ?, ?, ?);
+
+insertOrReplaceTask:
+INSERT OR REPLACE INTO Tasks (id, title, description, dueDate, dueTime, status)
+VALUES (?, ?, ?, ?, ?, ?);
+
+selectTaskById:
+SELECT * FROM Tasks WHERE id = ?;
+
+selectAllTasks:
+SELECT * FROM Tasks;
+
+lastInsertRowId:
+SELECT last_insert_rowid();
+
+updateTask:
+UPDATE Tasks
+SET title = ?, description = ?, dueDate = ?, dueTime = ?, status = ?
+WHERE id = ?;
+
+deleteTaskById:
+DELETE FROM Tasks WHERE id = ?;
+
+deleteAllTasks:
+DELETE FROM Tasks;
+
