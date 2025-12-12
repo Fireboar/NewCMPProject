@@ -11,16 +11,14 @@ data class Task(
     @SerialName("title")
     val title: String,
     @SerialName("description")
-    val description: String,
+    val description: String? = "",
     @SerialName("dueDate")
     val dueDate: String,
     @SerialName("dueTime")
     val dueTime: String,
     @SerialName("status")
-    val status: String = "To Do"
+    val status: String? = "To Do"
 )
-
-
 
 
 fun Task.toLocalDateTimeOrNull(): LocalDateTime? {

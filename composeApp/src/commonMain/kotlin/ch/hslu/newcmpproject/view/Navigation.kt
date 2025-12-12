@@ -18,13 +18,14 @@ import ch.hslu.newcmpproject.view.bars.SuccessMessage
 import ch.hslu.newcmpproject.view.bars.TopBar
 import ch.hslu.newcmpproject.view.taskDetailScreen.TaskDetailScreen
 import ch.hslu.newcmpproject.view.taskDetailScreen.TaskDetailScreenDesktopWeb
+import ch.hslu.newcmpproject.view.userScreen.UserScreen
 import ch.hslu.newcmpproject.viewmodel.TaskViewModel
 
 enum class PlatformType { ANDROID, IOS, DESKTOP, WEB }
 
 expect fun getPlatform(): PlatformType
 
-enum class ScreenType { KANBAN, ADDTASK,  TASKDETAIL}
+enum class ScreenType { KANBAN, ADDTASK,  TASKDETAIL, USER}
 
 @Composable
 fun Navigation(taskViewModel: TaskViewModel) {
@@ -93,8 +94,7 @@ fun Navigation(taskViewModel: TaskViewModel) {
                 }
             }
 
-
-
+            ScreenType.USER -> UserScreen(taskViewModel,paddingValues)
 
 
         }

@@ -3,9 +3,11 @@ package ch.hslu.newcmpproject.view.bars
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
@@ -33,6 +35,13 @@ fun BottomNavigationBar(
             onClick = { onNavigate(ScreenType.ADDTASK) },
             icon = { Icon(Icons.Filled.Add, contentDescription = "Add Task") },
             label = { Text("Add Task", fontSize = 14.sp, color = Color.White) }
+        )
+
+        NavigationBarItem(
+            selected = currentScreen == ScreenType.USER,
+            onClick = { onNavigate(ScreenType.USER) },
+            icon = { Icon(Icons.Filled.Person, contentDescription = "User") },
+            label = { Text("User", fontSize = 14.sp, color = Color.White) },
         )
     }
 }

@@ -10,39 +10,86 @@ class TaskSDK(val database: Database, val api: TaskApi) {
         return database.getTasks()
     }
 
-    suspend fun addTask(task: Task, isServerOnline: Boolean) : Boolean{
-        database.insertTask(task)
-        return true;
+    suspend fun addTask(task: Task, isServerOnline: Boolean): Boolean {
+        val newTask = database.insertTask(task)
+        if (isServerOnline){
+            return api.addTask(newTask)
+        }
+        return false
     }
 
-    suspend fun deleteTask(task: Task, isServerOnline: Boolean) : Boolean{
-        database.deleteTask(task)
-        return true;
-    }
-
-    suspend fun updateTask(task: Task, isServerOnline: Boolean) : Boolean{
+    suspend fun updateTask(task: Task, isServerOnline: Boolean): Boolean {
         database.updateTask(task)
-        return true;
+        if(isServerOnline){
+            return api.updateTask(task)
+        }
+        return false
     }
+
+
+    suspend fun deleteTask(task: Task, isServerOnline: Boolean): Boolean {
+        database.deleteTask(task)
+        if(isServerOnline){
+            return api.deleteTask(task.id.toLong())
+        }
+        return false
+    }
+
 
     suspend fun isServerOnline():Boolean{
-        return false;
+        return api.isServerOnline()
     }
 
     suspend fun isInSync(): Boolean {
-        return false;
-    }
+        val serverTasks = api.getTasks()
+        if(serverTasks.isEmpty()){
+            return false
+        }
+        val localTasks = database.getTasks()
 
-    suspend fun mergeTasks(isServerOnline: Boolean): Boolean {
-        return true;
-    }
-
-    suspend fun pullTasks(isServerOnline: Boolean): Boolean {
-        return true;
+        return localTasks == serverTasks
     }
 
     suspend fun postTasks(isServerOnline: Boolean): Boolean {
-        return true;
+        if (isServerOnline){
+            return api.replaceTasks(database.getTasks())
+        }
+        return false
     }
+
+    suspend fun pullTasks(isServerOnline: Boolean): Boolean {
+        if (isServerOnline){
+            val serverTasks = api.getTasks()
+            if(serverTasks.isNotEmpty()){
+                database.replaceTasks(serverTasks)
+                return true
+            } else {
+                return false
+            }
+        }
+        return false
+    }
+
+    suspend fun mergeTasks(isServerOnline: Boolean): Boolean {
+        if(isServerOnline){
+            val serverTasks = api.getTasks()
+            val localTasks = database.getTasks()
+
+            val mergedTasks = (serverTasks + localTasks)
+                .distinctBy { it.id }
+
+            val updatedServerTasks = api.getTasks()
+            database.replaceTasks(updatedServerTasks)
+
+            return api.replaceTasks(mergedTasks)
+        }
+        return false
+    }
+
+
+
+
+
+
 
 }

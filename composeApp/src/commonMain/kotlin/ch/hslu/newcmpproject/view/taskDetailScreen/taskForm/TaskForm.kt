@@ -52,6 +52,47 @@ fun TaskForm(
     var error by remember { mutableStateOf("") }
     var expanded by remember { mutableStateOf(false) }
 
+    fun submit() {
+        if (title.isBlank()) {
+            error = "Titel darf nicht leer sein"
+            return
+        }
+
+        try {
+            val partsDate = dueDate.split(".").map { it.toInt() }
+            val partsTime = dueTime.split(":").map { it.toInt() }
+
+            LocalDateTime(
+                year = partsDate[2],
+                month = partsDate[1],
+                day = partsDate[0],
+                hour = partsTime[0],
+                minute = partsTime[1]
+            )
+
+            val task = Task(
+                id = existingTask?.id ?: 0,
+                title = title,
+                description = description,
+                dueDate = dueDate,
+                dueTime = dueTime,
+                status = status
+            )
+
+            onSubmit(task)   // Hier wird der Task nach oben weitergegeben
+            onNavigateBack() // Bei update kann hier zurück zum KanBan gesprungen werden
+
+            title = ""
+            description = ""
+            dueDate = ""
+            dueTime = ""
+            error = ""
+
+        } catch (e: Exception) {
+            error = "Datum oder Uhrzeit ungültig"
+        }
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -129,52 +170,11 @@ fun TaskForm(
         }
 
         Button(
-            onClick = {
-                if (title.isBlank()) {
-                    error = "Titel darf nicht leer sein"
-                    return@Button
-                }
-
-                try {
-                    val partsDate = dueDate.split(".").map { it.toInt() }
-                    val partsTime = dueTime.split(":").map { it.toInt() }
-
-                    LocalDateTime(
-                        year = partsDate[2],
-                        month = partsDate[1],
-                        day = partsDate[0],
-                        hour = partsTime[0],
-                        minute = partsTime[1]
-                    )
-
-                    val task = Task(
-                        id = existingTask?.id ?: 0,
-                        title = title,
-                        description = description,
-                        dueDate = dueDate,
-                        dueTime = dueTime,
-                        status = status
-                    )
-
-                    onSubmit(task)   // Hier wird der Task nach oben weitergegeben
-                    onNavigateBack() // Bei update kann hier zurück zum KanBan gesprungen werden
-
-                    title = ""
-                    description = ""
-                    dueDate = ""
-                    dueTime = ""
-                    error = ""
-
-                } catch (e: Exception) {
-                    error = "Datum oder Uhrzeit ungültig"
-                }
-
-            },
+            onClick = { submit() },
             modifier = Modifier.align(Alignment.End).padding(16.dp)
         ) {
             Text(buttonText)
         }
-
 
     }
 }

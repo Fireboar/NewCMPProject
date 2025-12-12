@@ -99,6 +99,12 @@ fun TaskFormDesktopWeb(
             onSubmit(task)
             onNavigateBack()
 
+            title = ""
+            description = ""
+            dueDate = ""
+            dueTime = ""
+            error = ""
+
         } catch (e: Exception) {
             error = "Datum oder Uhrzeit ungültig"
         }

@@ -1,4 +1,4 @@
-package ch.hslu.newcmpproject.cache
+package cache
 
 import app.cash.sqldelight.async.coroutines.awaitAsList
 import app.cash.sqldelight.async.coroutines.awaitAsOne

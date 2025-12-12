@@ -34,51 +34,51 @@ class TaskViewModel (private val sdk: TaskSDK) : ViewModel(){
 
     fun setSyncMessage(message: String, positive: Boolean, priority: Int = 2) {
         viewModelScope.launch {
-            // Neue Message nur setzen wenn priority >= aktuelle priority
-            if (priority < _syncMessage.value.priority) {
-                return@launch
-            }
+            if(isServerOnline.value){
+                // Neue Message nur setzen wenn priority >= aktuelle priority
+                if (priority < _syncMessage.value.priority) {
+                    return@launch
+                }
 
-            clearMessageJob?.cancel()
+                clearMessageJob?.cancel()
 
-            _syncMessage.value = SyncMessage(message, positive, priority)
+                _syncMessage.value = SyncMessage(message, positive, priority)
 
-            clearMessageJob = viewModelScope.launch {
-                delay(8000)
-                _syncMessage.value = SyncMessage("", true, priority = 0)
+                clearMessageJob = viewModelScope.launch {
+                    delay(8000)
+                    _syncMessage.value = SyncMessage("", true, priority = 0)
+                }
             }
         }
     }
-
 
     fun checkServerStatus(){
         viewModelScope.launch {
             while (true) {
-                isServerOnline()
-                isInSync()
+                val online = sdk.isServerOnline()
+                _isServerOnline.value = online
+                if (online) {
+                    isInSync()
+                }
                 delay(8000)
             }
-        }
-    }
-
-    fun isServerOnline() {
-        viewModelScope.launch {
-            _isServerOnline.value = sdk.isServerOnline()
         }
     }
 
     fun isInSync(){
         viewModelScope.launch {
-            val inSync = sdk.isInSync()
-            if (inSync) {
-                setSyncMessage("Lokale Daten und Server sind synchron", true, 1)
-            } else {
-                setSyncMessage("Server nicht synchron oder hat keine Tasks", false, 1)
+            if(isServerOnline.value){
+                val inSync = sdk.isInSync()
+                if (inSync) {
+                    setSyncMessage("Lokale Daten und Server sind synchron", true, 1)
+                } else {
+                    setSyncMessage("Server nicht synchron oder hat keine Tasks", false, 1)
+                }
             }
         }
     }
 
-    fun addTask(title: String, description: String, dueDate: String, dueTime: String, status:String?) {
+    fun addTask(title: String, description: String?, dueDate: String, dueTime: String, status: String?) {
         viewModelScope.launch {
             val task = Task(
                 id = 0,
