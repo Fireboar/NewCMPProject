@@ -4,13 +4,32 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import ch.hslu.newcmpproject.TaskSDK
 import ch.hslu.newcmpproject.entity.Task
+import ch.hslu.newcmpproject.entity.TokenStorage
 import ch.hslu.newcmpproject.model.SyncMessage
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
 class TaskViewModel (private val sdk: TaskSDK) : ViewModel(){
+
+    val tokenStorage = TokenStorage()
+    private val _isLoggedIn = MutableStateFlow(tokenStorage.loadToken() != null)
+    val isLoggedIn: StateFlow<Boolean> = _isLoggedIn
+
+    private val _currentUserName = MutableStateFlow(
+        tokenStorage.loadUsername()
+    )
+    val currentUserName: StateFlow<String> = _currentUserName
+
+    private val _currentUserId = MutableStateFlow<Long?>(
+        tokenStorage.loadUserId()
+    )
+    val currentUserId: StateFlow<Long?> = _currentUserId
+
+    /*private val _allUsers = MutableStateFlow<List<User>>(emptyList())
+    val allUsers: StateFlow<List<User>> = _allUsers*/
 
     private val _tasks = MutableStateFlow<List<Task>>(emptyList())
     val tasks: StateFlow<List<Task>> = _tasks
@@ -24,31 +43,108 @@ class TaskViewModel (private val sdk: TaskSDK) : ViewModel(){
     private var _isServerOnline: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val isServerOnline: StateFlow<Boolean> = _isServerOnline
 
-    private var clearMessageJob: kotlinx.coroutines.Job? = null
-
 
     init {
         checkServerStatus()
-        loadTasks()
+        /*loadAllUsers()*/
+        // loadTasks nur aufrufen, wenn eingeloggt
+        viewModelScope.launch {
+            if (isLoggedIn.value) {
+                loadTasks()
+            }
+        }
     }
 
-    fun setSyncMessage(message: String, positive: Boolean, priority: Int = 2) {
+/*
+    fun loadAllUsers() {
         viewModelScope.launch {
-            if(isServerOnline.value){
-                // Neue Message nur setzen wenn priority >= aktuelle priority
-                if (priority < _syncMessage.value.priority) {
-                    return@launch
-                }
+            _allUsers.value = sdk.getAllUsers()
+        }
+    }
 
-                clearMessageJob?.cancel()
+    fun addUser(username: String, password: String) {
+        viewModelScope.launch {
+            val success = sdk.addUser(username, password)
+            if(success) loadAllUsers()
+        }
+    }
 
-                _syncMessage.value = SyncMessage(message, positive, priority)
+    fun updateUser(user: User) {
+        viewModelScope.launch {
+            val success = sdk.updateUser(user)
+            if(success) loadAllUsers()
+        }
+    }
 
-                clearMessageJob = viewModelScope.launch {
-                    delay(8000)
-                    _syncMessage.value = SyncMessage("", true, priority = 0)
-                }
+    fun deleteUser(userId: Long) {
+        viewModelScope.launch {
+            val success = sdk.deleteUser(userId)
+            if(success) loadAllUsers()
+        }
+    }
+*/
+    fun manualOfflineLogin(username: String) {
+        viewModelScope.launch {
+            _currentUserName.value = username
+            _currentUserId.value = null
+            _isLoggedIn.value = true
+            setSyncMessage("Offline-Modus aktiv", true)
+            loadTasks()
+        }
+    }
+
+
+    fun updateUsername(newUsername: String) {
+        viewModelScope.launch {
+            val success = sdk.updateUsername(newUsername)
+            if (success) {
+                _currentUserName.value = newUsername
+                setSyncMessage("Username aktualisiert", true)
+            } else {
+                setSyncMessage("Username konnte nicht aktualisiert werden.", false)
             }
+        }
+    }
+
+    fun updatePassword(oldPassword: String, newPassword: String) {
+        viewModelScope.launch {
+            val success = sdk.updatePassword(oldPassword, newPassword)
+            if (success) {
+                setSyncMessage("Passwort erfolgreich geändert.", true)
+            } else {
+                setSyncMessage("Passwort konnte nicht geändert werden.", false)
+            }
+        }
+    }
+
+
+    fun login(username: String, password: String) {
+        viewModelScope.launch {
+            val success = sdk.login(username, password)
+            _isLoggedIn.value = success
+
+            if(success) {
+                // Werte aus Storage oder SDK verwenden
+                _currentUserName.value = tokenStorage.loadUsername()
+                _currentUserId.value = tokenStorage.loadUserId()
+                loadTasks()
+            } else {
+                _currentUserName.value = ""
+                _currentUserId.value = null
+                _tasks.value = emptyList()
+            }
+        }
+    }
+
+
+
+
+    fun logout(){
+        viewModelScope.launch {
+            sdk.logout()
+            _isLoggedIn.value = false;
+            _currentUserName.value = "";
+            _currentUserId.value = null;
         }
     }
 
@@ -65,13 +161,25 @@ class TaskViewModel (private val sdk: TaskSDK) : ViewModel(){
         }
     }
 
+    fun setSyncMessage(message: String, positive: Boolean, priority: Int = 2) {
+        viewModelScope.launch {
+            if(isServerOnline.value){
+                // Neue Message nur setzen wenn priority >= aktuelle priority
+                if (priority < _syncMessage.value.priority) {
+                    return@launch
+                }
+
+                _syncMessage.value = SyncMessage(message, positive, priority)
+
+            }
+        }
+    }
+
     fun isInSync(){
         viewModelScope.launch {
             if(isServerOnline.value){
                 val inSync = sdk.isInSync()
-                if (inSync) {
-                    setSyncMessage("Lokale Daten und Server sind synchron", true, 1)
-                } else {
+                if (!inSync) {
                     setSyncMessage("Server nicht synchron oder hat keine Tasks", false, 1)
                 }
             }

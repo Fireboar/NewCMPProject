@@ -40,6 +40,9 @@ kotlin {
             implementation(libs.ktor.serialization.kotlinx.json)
             implementation(libs.runtime)
             implementation(libs.kotlinx.datetime)
+
+            // Settings
+            implementation(libs.multiplatform.settings)
         }
         androidMain.dependencies {
             //Database

@@ -1,4 +1,4 @@
-package ch.hslu.newcmpproject.view.kanBanScreen
+package ch.hslu.newcmpproject.view.task.kanBanScreen
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll

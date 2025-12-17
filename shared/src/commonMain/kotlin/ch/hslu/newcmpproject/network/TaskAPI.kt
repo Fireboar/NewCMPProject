@@ -1,12 +1,18 @@
 package ch.hslu.newcmpproject.network
 
+import ch.hslu.newcmpproject.entity.LoginRequest
 import ch.hslu.newcmpproject.entity.Task
+import ch.hslu.newcmpproject.entity.Token
+import ch.hslu.newcmpproject.entity.TokenStorage
+import ch.hslu.newcmpproject.entity.UpdatePasswordRequest
+import ch.hslu.newcmpproject.entity.UpdateUsernameRequest
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.request.delete
 import io.ktor.client.request.get
+import io.ktor.client.request.header
 import io.ktor.client.request.post
 import io.ktor.client.request.put
 import io.ktor.client.request.setBody
@@ -15,7 +21,7 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
-
+import io.ktor.http.headers
 class TaskApi() {
 
     private val serverIP = "http://192.168.1.22:8080"
@@ -34,18 +40,92 @@ class TaskApi() {
         }
     }
 
-    suspend fun getTasks(): List<Task> {
+    suspend fun login(
+        username: String,
+        password: String
+    ): Token {
         return try {
-            httpClient.get("$serverIP/tasks").body()
+            val response = httpClient.post("$serverIP/login") {
+                contentType(ContentType.Application.Json)
+                setBody(LoginRequest(username, password))
+            }
+
+            if (response.status != HttpStatusCode.OK) {
+                return Token("") // leeres Token statt Exception
+            }
+
+            val json = response.body<Map<String, String>>()
+            val tokenString = json["token"] ?: return Token("")
+
+            Token(tokenString)
+
+        } catch (e: Throwable) {
+            e.printStackTrace()
+            Token("") // Fehlerfall → leeres Token
+        }
+    }
+
+    suspend fun updateUsername(
+        token: Token,
+        newUsername: String
+    ): Token {
+        return try {
+            val response = httpClient.put("$serverIP/user/username") {
+                header("Authorization", "Bearer ${token.value}")
+                contentType(ContentType.Application.Json)
+                setBody(UpdateUsernameRequest(newUsername))
+            }
+
+            if (response.status != HttpStatusCode.OK) {
+                return Token("")
+            }
+
+            val json = response.body<Map<String, String>>()
+            Token(json["token"] ?: "")
+
+        } catch (e: Throwable) {
+            e.printStackTrace()
+            Token("")
+        }
+    }
+
+    suspend fun updatePassword(
+        token: Token,
+        oldPassword: String,
+        newPassword: String
+    ): Boolean {
+        return try {
+            val response = httpClient.put("$serverIP/user/password") {
+                header("Authorization", "Bearer ${token.value}")
+                contentType(ContentType.Application.Json)
+                setBody(UpdatePasswordRequest(oldPassword, newPassword))
+            }
+
+            response.status == HttpStatusCode.OK
+
+        } catch (e: Throwable) {
+            e.printStackTrace()
+            false
+        }
+    }
+
+
+    suspend fun getTasks(token: Token): List<Task> {
+        return try {
+            httpClient.get("$serverIP/tasks") {
+                header("Authorization", "Bearer ${token.value}")
+            }.body<List<Task>>()  // Typ explizit angeben
         } catch (e: Throwable) {
             e.printStackTrace()
             emptyList()
         }
     }
 
-    suspend fun addTask(task: Task):Boolean {
+
+    suspend fun addTask(token:Token, task: Task):Boolean {
         return try {
             val response = httpClient.post("$serverIP/tasks") {
+                header("Authorization", "Bearer ${token.value}")
                 contentType(ContentType.Application.Json)
                 setBody(task)
             }
@@ -56,9 +136,10 @@ class TaskApi() {
         }
     }
 
-    suspend fun updateTask(task: Task) :Boolean {
+    suspend fun updateTask(token:Token, task: Task) :Boolean {
         return try {
             val response = httpClient.put("$serverIP/tasks/${task.id}") {
+                header("Authorization", "Bearer ${token.value}")
                 contentType(ContentType.Application.Json)
                 setBody(task)
             }
@@ -69,9 +150,11 @@ class TaskApi() {
         }
     }
 
-    suspend fun deleteTask(id: Long): Boolean {
+    suspend fun deleteTask(token:Token, id: Long): Boolean {
         return try {
-            val response = httpClient.delete("$serverIP/tasks/$id")
+            val response = httpClient.delete("$serverIP/tasks/$id"){
+                header("Authorization", "Bearer ${token.value}")
+            }
             response.status == HttpStatusCode.OK
         } catch (e: Throwable) {
             e.printStackTrace()
@@ -79,9 +162,10 @@ class TaskApi() {
         }
     }
 
-    suspend fun replaceTasks(tasks: List<Task>): Boolean {
+    suspend fun replaceTasks(token:Token, tasks: List<Task>): Boolean {
         return try {
             val response = httpClient.post("$serverIP/tasks/replace") {
+                header("Authorization", "Bearer ${token.value}")
                 contentType(ContentType.Application.Json)
                 setBody(tasks)
             }

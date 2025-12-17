@@ -1,25 +1,55 @@
+-- Users Tabelle
+CREATE TABLE IF NOT EXISTS Users (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    username TEXT NOT NULL UNIQUE,
+    passwordHash TEXT NOT NULL,
+    salt TEXT NOT NULL
+);
+
+insertUser:
+INSERT INTO Users(username, passwordHash, salt)
+VALUES (?, ?,?);
+
+selectUserByUsername:
+SELECT * FROM Users WHERE username = ?;
+
+selectUserById:
+SELECT * FROM Users WHERE id = ?;
+
+updateUsername:
+UPDATE Users
+SET username = ?
+WHERE id = ?;
+
+updatePassword:
+UPDATE Users
+SET passwordHash = ?, salt = ?
+WHERE id = ?;
+
 CREATE TABLE IF NOT EXISTS Tasks (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
+    userId INTEGER NOT NULL,
     title TEXT NOT NULL,
     description TEXT,
     dueDate TEXT NOT NULL,
     dueTime TEXT NOT NULL,
-    status TEXT
+    status TEXT,
+    FOREIGN KEY(userId) REFERENCES Users(id) ON DELETE CASCADE
 );
 
 insertTask:
-INSERT INTO Tasks(title, description, dueDate, dueTime, status)
-VALUES( ?, ?, ?, ?, ?);
+INSERT INTO Tasks(userId, title, description, dueDate, dueTime, status)
+VALUES(?, ?, ?, ?, ?, ?);
 
 insertOrReplaceTask:
-INSERT OR REPLACE INTO Tasks (id, title, description, dueDate, dueTime, status)
-VALUES (?, ?, ?, ?, ?, ?);
+INSERT OR REPLACE INTO Tasks(id, userId, title, description, dueDate, dueTime, status)
+VALUES(?, ?, ?, ?, ?, ?, ?);
 
 selectTaskById:
-SELECT * FROM Tasks WHERE id = ?;
+SELECT * FROM Tasks WHERE id = ? AND userId = ?;
 
 selectAllTasks:
-SELECT * FROM Tasks;
+SELECT * FROM Tasks WHERE userId = ?;
 
 lastInsertRowId:
 SELECT last_insert_rowid();
@@ -27,11 +57,11 @@ SELECT last_insert_rowid();
 updateTask:
 UPDATE Tasks
 SET title = ?, description = ?, dueDate = ?, dueTime = ?, status = ?
-WHERE id = ?;
+WHERE id = ? AND userId = ?;
 
 deleteTaskById:
-DELETE FROM Tasks WHERE id = ?;
+DELETE FROM Tasks WHERE id = ? AND userId = ?;
 
 deleteAllTasks:
-DELETE FROM Tasks;
+DELETE FROM Tasks WHERE userId = ?;
 

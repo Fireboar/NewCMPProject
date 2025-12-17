@@ -1,8 +1,8 @@
-package ch.hslu.newcmpproject.view.addTaskScreen
+package ch.hslu.newcmpproject.view.task.addTaskScreen
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.*
-import ch.hslu.newcmpproject.view.taskDetailScreen.taskForm.TaskFormDesktopWeb
+import ch.hslu.newcmpproject.view.task.taskDetailScreen.taskForm.TaskFormDesktopWeb
 import ch.hslu.newcmpproject.viewmodel.TaskViewModel
 
 @Composable

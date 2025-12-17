@@ -1,8 +1,8 @@
-package ch.hslu.newcmpproject.view.addTaskScreen
+package ch.hslu.newcmpproject.view.task.addTaskScreen
 
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.runtime.Composable
-import ch.hslu.newcmpproject.view.taskDetailScreen.taskForm.TaskForm
+import ch.hslu.newcmpproject.view.task.taskDetailScreen.taskForm.TaskForm
 import ch.hslu.newcmpproject.viewmodel.TaskViewModel
 
 @Composable

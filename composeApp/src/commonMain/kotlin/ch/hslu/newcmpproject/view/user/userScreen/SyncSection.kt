@@ -1,4 +1,4 @@
-package ch.hslu.newcmpproject.view.userScreen
+package ch.hslu.newcmpproject.view.user.userScreen
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -19,11 +19,13 @@ import androidx.compose.ui.unit.dp
 import ch.hslu.newcmpproject.viewmodel.TaskViewModel
 
 @Composable
-fun SyncSection (taskViewModel: TaskViewModel, paddingValues: PaddingValues){
+fun SyncSection (taskViewModel: TaskViewModel){
     Column(
         modifier = Modifier
-            .padding(paddingValues)
-            .padding(16.dp)
+            .fillMaxWidth()
+            .padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
     ) {
         Text(
             text = "Synchronisation",
@@ -34,52 +36,32 @@ fun SyncSection (taskViewModel: TaskViewModel, paddingValues: PaddingValues){
 
         Row(
             horizontalArrangement = Arrangement.spacedBy(16.dp),
-            modifier = Modifier.fillMaxWidth(),
         ) {
-
             // Pull Tasks
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.weight(1f)
             ) {
                 Button(onClick = { taskViewModel.pullTasks() }) {
                     Text("Pull Tasks")
                 }
-                Text(
-                    text = "(overwrites local)",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = Color.Gray
-                )
             }
 
             // Push Tasks
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.weight(1f)
             ) {
                 Button(onClick = { taskViewModel.postTasks() }) {
                     Text("Push Tasks")
                 }
-                Text(
-                    text = "(overwrites server)",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = Color.Gray
-                )
             }
 
             // Merge Tasks
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.weight(1f)
             ) {
                 Button(onClick = { taskViewModel.mergeTasks() }) {
                     Text("Merge Tasks")
                 }
-                Text(
-                    text = "(adds tasks from both sides)",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = Color.Gray
-                )
             }
 
         }

@@ -7,7 +7,9 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class Task(
     @SerialName("id")
-    val id: Int = 0,
+    val id: Long = 0,
+    @SerialName("userid")
+    val userId: Long = 0,
     @SerialName("title")
     val title: String,
     @SerialName("description")

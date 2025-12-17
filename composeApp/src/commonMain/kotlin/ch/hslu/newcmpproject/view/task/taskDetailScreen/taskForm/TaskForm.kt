@@ -1,4 +1,4 @@
-package ch.hslu.newcmpproject.view.taskDetailScreen.taskForm
+package ch.hslu.newcmpproject.view.task.taskDetailScreen.taskForm
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -33,7 +33,7 @@ import kotlinx.datetime.LocalDateTime
 @Composable
 fun TaskForm(
     paddingValues: PaddingValues,
-    taskId: Int? = null,
+    taskId: Long? = null,
     taskViewModel: TaskViewModel,
     buttonText: String,
     onSubmit: (Task) -> Unit,
