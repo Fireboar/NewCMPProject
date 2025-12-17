@@ -5,4 +5,21 @@
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
 </dict>
+
+<key>NSAppTransportSecurity</key>
+<dict>
+	<key>NSExceptionDomains</key>
+	<dict>
+		<key>195.82.45.161</key>
+		<dict>
+			<key>NSTemporaryExceptionAllowsInsecureHTTPLoads</key>
+			<true/>
+			<key>NSTemporaryExceptionMinimumTLSVersion</key>
+			<string>TLSv1.2</string>
+			<key>NSIncludesSubdomains</key>
+			<true/>
+		</dict>
+	</dict>
+</dict>
+
 </plist>
