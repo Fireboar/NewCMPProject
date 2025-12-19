@@ -43,6 +43,7 @@ kotlin {
 
             // Settings
             implementation(libs.multiplatform.settings)
+
         }
         androidMain.dependencies {
             //Database

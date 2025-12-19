@@ -3,10 +3,12 @@ package ch.hslu.newcmpproject
 import app.cash.sqldelight.driver.jdbc.sqlite.JdbcSqliteDriver
 import ch.hslu.cmpproject.cache.AppDatabase
 import ch.hslu.newcmpproject.cache.Database
+import ch.hslu.newcmpproject.entity.CreateUserRequest
 import ch.hslu.newcmpproject.entity.LoginRequest
 import ch.hslu.newcmpproject.entity.Task
 import ch.hslu.newcmpproject.entity.UpdatePasswordRequest
 import ch.hslu.newcmpproject.entity.UpdateUsernameRequest
+import ch.hslu.newcmpproject.entity.UserSimple
 import ch.hslu.newcmpproject.security.generateSalt
 import ch.hslu.newcmpproject.security.hashPasswordWithSalt
 import ch.hslu.newcmpproject.security.verifyPassword
@@ -50,12 +52,13 @@ object JwtConfig {
     private const val audience = "ch.hslu.newcmpproject.audience"
     const val realm = "Access to tasks"
 
-    fun generateToken(userId: Long, username: String): String {
+    fun generateToken(userId: Long, username: String, role: String): String {
         return JWT.create()
             .withAudience(audience)
             .withIssuer(issuer)
             .withClaim("userId", userId)
             .withClaim("userName", username)
+            .withClaim("role", role)      // ⚡ hier hinzufügen
             .sign(Algorithm.HMAC256(secret))
     }
 
@@ -103,7 +106,19 @@ suspend fun Application.module() {
 
     // Prüfen, ob schon ein User existiert
     val existingUser = database.getUserByUsername("admin")
-    val thisId = existingUser?.id ?: database.insertUser("admin", "123")
+    val thisId = existingUser?.id ?: database.insertUser(
+        username = "admin", password = "123",
+        role = "ADMIN"
+    )
+
+    // Verify that it exists
+    val adminUser = database.getUserByUsername("admin")
+    if (adminUser != null) {
+        println("Admin user exists: id=${adminUser.id}, username=${adminUser.username}, password=${adminUser.passwordHash}, salt=${adminUser.salt} role=${adminUser.role}")
+    } else {
+        println("Failed to create admin user!")
+    }
+
 
     // Prüfen, ob Tasks für diesen User existieren
     if (database.getTasks(thisId).isEmpty()) {
@@ -118,6 +133,10 @@ suspend fun Application.module() {
         database.insertTask(defaultTask)
     }
 
+    fun JWTPrincipal.isAdmin(): Boolean =
+        payload.getClaim("role").asString() == "ADMIN"
+
+
     routing {
         post("/login") {
             val loginRequest = call.receive<LoginRequest>() // z.B. username + password
@@ -128,7 +147,8 @@ suspend fun Application.module() {
                 return@post
             }
 
-            val token = JwtConfig.generateToken( user.id, user.username)
+            val token = JwtConfig.generateToken(user.id, user.username, user.role)
+
             call.respond(mapOf("token" to token))
         }
 
@@ -138,49 +158,183 @@ suspend fun Application.module() {
         }
 
         authenticate("auth-jwt") {
-            // User
+            // Admin
 
+            // READ ALL USERS
+            get("/users") {
+                val principal = call.principal<JWTPrincipal>()
+                    ?: return@get call.respond(HttpStatusCode.Unauthorized)
+
+                if (!principal.isAdmin()) {
+                    return@get call.respond(HttpStatusCode.Forbidden, "Admin only")
+                }
+
+                val users = database.getAllUsers()  // Eine Funktion, die alle User zurückgibt
+                call.respond(users.map { user ->
+                    // Nur die notwendigen Daten zurückgeben, z.B. ID + Username + Role
+                    UserSimple(
+                        userId = user.id,
+                        userName = user.username,
+                        role = user.role
+                    )
+                })
+            }
+
+            get("/users/{id}") {
+                val principal = call.principal<JWTPrincipal>()
+                    ?: return@get call.respond(HttpStatusCode.Unauthorized)
+
+                val requesterId = principal.payload.getClaim("userId").asLong()
+                val requesterRole = principal.payload.getClaim("role").asString()
+
+                // ID aus der URL lesen
+                val userId = call.parameters["id"]?.toLongOrNull()
+                    ?: return@get call.respond(HttpStatusCode.BadRequest, "Invalid user id")
+
+                // Zugriff prüfen: entweder Admin oder eigener User
+                if (requesterRole != "ADMIN" && requesterId != userId) {
+                    return@get call.respond(HttpStatusCode.Forbidden, "Access denied")
+                }
+
+                // User aus DB holen
+                val user = database.getUserById(userId)
+                    ?: return@get call.respond(HttpStatusCode.NotFound, "User not found")
+
+                // Nur sichere Daten zurückgeben
+                call.respond(
+                    UserSimple(
+                        userId = user.id,
+                        userName = user.username,
+                        role = user.role
+                    )
+                )
+            }
+
+
+            // Create
+            post("/users") {
+                val principal = call.principal<JWTPrincipal>()
+                    ?: return@post call.respond(HttpStatusCode.Unauthorized)
+
+                if (!principal.isAdmin()) {
+                    return@post call.respond(HttpStatusCode.Forbidden, "Admin only")
+                }
+
+                val userrequest = call.receive<CreateUserRequest>() // username + password
+
+                val existing = database.getUserByUsername(userrequest.username)
+                if (existing != null) {
+                    return@post call.respond(HttpStatusCode.Conflict, "User already exists")
+                }
+
+                val userId = database.insertUser(
+                    userrequest.username,
+                    userrequest.password,
+                    userrequest.role
+                )
+
+                val user = database.getUserById(userId)!!
+
+                val userResponse = UserSimple(
+                    userId = user.id,
+                    userName = user.username,
+                    role = user.role
+                )
+
+                call.respond(userResponse)
+            }
+
+            // User
             // UPDATE USERNAME
             put("/user/username") {
                 val principal = call.principal<JWTPrincipal>()
                     ?: return@put call.respond(HttpStatusCode.Unauthorized)
 
-                val userId = principal.payload.getClaim("userId").asLong()
-                val request = call.receive<UpdateUsernameRequest>()
+                val adminRole = principal.payload.getClaim("role").asString()
+                val requesterId = principal.payload.getClaim("userId").asLong()
 
-                if (request.username.isBlank()) {
-                    return@put call.respond(HttpStatusCode.BadRequest, "Username empty")
+                val request = call.receive<UpdateUsernameRequest>()
+                val targetUserId = request.userId ?: requesterId  // eigener User, falls keine ID angegeben
+
+                // Nur Admin darf andere User ändern
+                if (targetUserId != requesterId && adminRole != "ADMIN") {
+                    return@put call.respond(HttpStatusCode.Forbidden, "Only admins can update other users")
                 }
 
-                database.updateUsername(userId, request.username)
+                // Prüfen, ob Username bereits existiert
+                val existingUser = database.getUserByUsername(request.username)
+                if (existingUser != null && existingUser.id != targetUserId) {
+                    return@put call.respond(HttpStatusCode.Conflict, "Username already exists")
+                }
 
-                // ⚠️ neues JWT mit neuem Username
-                val newToken = JwtConfig.generateToken(userId, request.username)
+                // Update durchführen
+                database.updateUsername(targetUserId, request.username)
 
-                call.respond(HttpStatusCode.OK, mapOf("token" to newToken))
+                val targetUser = database.getUserById(targetUserId)!!
+
+                // Neues JWT nur für eigenen User
+                if (targetUserId == requesterId) {
+                    val newToken = JwtConfig.generateToken(targetUser.id, targetUser.username, targetUser.role)
+                    call.respond(HttpStatusCode.OK, mapOf("token" to newToken))
+                } else {
+                    call.respond(HttpStatusCode.OK, mapOf("message" to "User updated"))
+                }
             }
 
+
+            // Update Password
             put("/user/password") {
                 val principal = call.principal<JWTPrincipal>()
                     ?: return@put call.respond(HttpStatusCode.Unauthorized)
 
-                val userId = principal.payload.getClaim("userId").asLong()
+                val adminRole = principal.payload.getClaim("role").asString()
+                val requesterId = principal.payload.getClaim("userId").asLong()
+
                 val request = call.receive<UpdatePasswordRequest>()
+                val targetUserId = request.userId ?: requesterId
 
-                val user = database.getUserById(userId)
-                    ?: return@put call.respond(HttpStatusCode.NotFound)
-
-                // Prüfen, ob altes Passwort korrekt ist
-                if (!verifyPassword(request.oldPassword, user)) {
-                    return@put call.respond(HttpStatusCode.Unauthorized, "Wrong password")
+                if (targetUserId != requesterId && adminRole != "ADMIN") {
+                    return@put call.respond(HttpStatusCode.Forbidden, "Only admins can change other users' passwords")
                 }
 
-                // neuen Salt erzeugen
+                val user = database.getUserById(targetUserId)
+                    ?: return@put call.respond(HttpStatusCode.NotFound, "User not found")
+
+                if (targetUserId == requesterId) {
+                    val oldPassword = request.oldPassword
+                        ?: return@put call.respond(
+                            HttpStatusCode.Unauthorized,
+                            "Old password required"
+                        )
+
+                    if (!verifyPassword(oldPassword, user)) {
+                        return@put call.respond(
+                            HttpStatusCode.Unauthorized,
+                            "Wrong password"
+                        )
+                    }
+                }
+
                 val newSalt = generateSalt()
                 val newPasswordHash = hashPasswordWithSalt(request.newPassword, newSalt)
+                database.updatePassword(targetUserId, newPasswordHash, newSalt.joinToString("") { "%02x".format(it) })
 
-                // in DB speichern
-                database.updatePassword(userId, newPasswordHash, newSalt.joinToString("") { "%02x".format(it) })
+                call.respond(HttpStatusCode.OK, mapOf("message" to "Password updated"))
+            }
+
+            // Delete
+            delete("/users/{id}") {
+                val principal = call.principal<JWTPrincipal>()
+                    ?: return@delete call.respond(HttpStatusCode.Unauthorized)
+
+                if (!principal.isAdmin()) {
+                    return@delete call.respond(HttpStatusCode.Forbidden, "Admin only")
+                }
+
+                val userId = call.parameters["id"]?.toLongOrNull()
+                    ?: return@delete call.respond(HttpStatusCode.BadRequest)
+
+                database.deleteUser(userId)
 
                 call.respond(HttpStatusCode.OK)
             }

@@ -16,41 +16,52 @@ class Database (val driver: SqlDriver){
     private val database = AppDatabase(driver)
     private val dbQuery get() = database.appDatabaseQueries
 
+    // Admin
+    // Alle User abrufen
+    suspend fun getAllUsers(): List<User> {
+        return dbQuery.selectAllUsers(::mapUser).awaitAsList()
+    }
+
+
     // User
     suspend fun getUserByUsername(username: String): User? {
         return dbQuery.selectUserByUsername(username, ::mapUser).awaitAsOneOrNull()
     }
 
-    suspend fun insertUser(username: String, password: String): Long {
+    suspend fun insertUser(username: String, password: String, role: String): Long {
         val salt = generateSalt()
         val hash = hashPasswordWithSalt(password, salt)
-        val user = insertUserSecure(username,hash, salt)
+        val user = insertUserSecure(username = username, passwordHash = hash, salt = salt, role= role)
         return user.id
     }
-    suspend fun insertUserSecure(username: String, passwordHash: String, salt: ByteArray): User {
-        // Convert salt to hex for storage
+    suspend fun insertUserSecure(
+        username: String,
+        passwordHash: String,
+        salt: ByteArray,
+        role: String
+    ): User = dbQuery.transactionWithResult {
+        // Salt in Hex umwandeln
         val saltHex = salt.joinToString("") { "%02x".format(it) }
 
-        // Insert User
+        // User einfügen
         dbQuery.insertUser(
             username = username,
             passwordHash = passwordHash,
-            salt = saltHex
+            salt = saltHex,
+            role = role
         )
 
-        // Hole die letzte eingefügte ID
+        // Letzte ID holen
         val newId = dbQuery.lastInsertRowId().awaitAsOne()
-
         if (newId == 0L) {
-            throw IllegalStateException("Insert failed: no ID returned. Check if username is unique and table exists.")
+            throw IllegalStateException("Insert failed: no ID returned.")
         }
 
-        // Hole den User anhand der ID
-        val user = dbQuery.selectUserById(newId, ::mapUser).awaitAsOneOrNull()
-            ?: throw IllegalStateException("Insert failed: User not found after insert. Check database schema.")
-
-        return user
+        // User anhand der ID abrufen
+        dbQuery.selectUserById(newId, ::mapUser).awaitAsOne()
     }
+
+
 
     suspend fun updateUsername(userId: Long, username: String) {
         dbQuery.updateUsername(username, userId)
@@ -71,23 +82,29 @@ class Database (val driver: SqlDriver){
             ?.toUser()
     }
 
+    suspend fun deleteUser(userId: Long) {
+        dbQuery.deleteUserById(userId)
+    }
+
     fun Users.toUser(): User =
         User(
             id = id,
             username = username,
             passwordHash = passwordHash,
-            salt = salt
+            salt = salt,
+            role = role
         )
 
-
-    private fun mapUser(id: Long, username: String, passwordHash: String, salt: String): User {
+    private fun mapUser(id: Long, username: String, passwordHash: String, salt: String, role: String): User {
         return User(
             id = id,
             username = username,
             passwordHash = passwordHash,
-            salt = salt
+            salt = salt,
+            role = role
         )
     }
+
 
     // Task
 

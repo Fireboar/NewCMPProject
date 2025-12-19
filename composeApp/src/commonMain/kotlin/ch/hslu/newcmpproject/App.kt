@@ -8,12 +8,15 @@ import ch.hslu.newcmpproject.cache.Database
 import ch.hslu.newcmpproject.cache.provideDbDriver
 import ch.hslu.newcmpproject.network.TaskApi
 import ch.hslu.newcmpproject.view.Navigation
+import ch.hslu.newcmpproject.viewmodel.SyncViewModel
 import ch.hslu.newcmpproject.viewmodel.TaskViewModel
-import org.jetbrains.compose.ui.tooling.preview.Preview
+import ch.hslu.newcmpproject.viewmodel.UserViewModel
 
 @Composable
 fun App() {
     var taskViewModel by remember { mutableStateOf<TaskViewModel?>(null) }
+    var userViewModel by remember { mutableStateOf<UserViewModel?>(null) }
+    var syncViewModel by remember { mutableStateOf<SyncViewModel?>(null) }
     var isLoading by remember { mutableStateOf(true) }
 
     LaunchedEffect(Unit) {
@@ -21,19 +24,33 @@ fun App() {
         val database = Database(driver)
         val api = TaskApi()
         val sdk = TaskSDK(database, api)
-        taskViewModel = TaskViewModel(sdk)
+
+        // Setze die State-Variable
+        syncViewModel = SyncViewModel(sdk)
+
+        userViewModel = UserViewModel(
+            sdk = sdk,
+            syncViewModel = syncViewModel!! // jetzt ist sie gesetzt
+        )
+        taskViewModel = TaskViewModel(
+            sdk,
+            syncViewModel!!
+        )
+
         isLoading = false
     }
 
-    if (isLoading) {
-        Text("Loading…")
-    } else {
-        taskViewModel?.let {
-            MaterialTheme {
-                Navigation(taskViewModel = it)
-            }
+
+    if (!isLoading) {
+        MaterialTheme {
+            Navigation(
+                taskViewModel = taskViewModel!!,
+                userViewModel = userViewModel!!,
+                syncViewModel = syncViewModel!!
+            )
         }
     }
+
 }
 
 

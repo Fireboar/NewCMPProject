@@ -24,12 +24,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import ch.hslu.newcmpproject.viewmodel.SyncViewModel
 import ch.hslu.newcmpproject.viewmodel.TaskViewModel
 
 @Composable
-fun SuccessMessage(taskViewModel: TaskViewModel) {
-    val syncMessage by taskViewModel.syncMessage.collectAsState()
-    val serverOnline by taskViewModel.isServerOnline.collectAsState()
+fun SuccessMessage(syncViewModel: SyncViewModel) {
+    val syncMessage by syncViewModel.syncMessage.collectAsState()
+    val serverOnline by syncViewModel.isServerOnline.collectAsState()
 
     // State für auf-/zugeklappt
     var expanded by remember { mutableStateOf(false) }

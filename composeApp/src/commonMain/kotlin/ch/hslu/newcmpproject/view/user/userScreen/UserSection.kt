@@ -16,14 +16,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import ch.hslu.newcmpproject.viewmodel.TaskViewModel
+import ch.hslu.newcmpproject.viewmodel.UserViewModel
 
 @Composable
 fun UserSection(
-    taskViewModel: TaskViewModel,
+    userViewModel: UserViewModel,
     onUserClick: (userId: Long) -> Unit
 ) {
-    val userName = taskViewModel.currentUserName.value
-    val isLoggedIn = taskViewModel.isLoggedIn.value
+    val userName = userViewModel.currentUser.value?.userName
+    val isLoggedIn = userViewModel.isLoggedIn.value
 
     Column(
         modifier = Modifier
@@ -49,12 +50,12 @@ fun UserSection(
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    Button(onClick = { onUserClick(taskViewModel.currentUserId.value!!) }) {
+                    Button(onClick = { onUserClick(userViewModel.currentUser.value?.userId!!) }) {
                         Text("Edit Profile")
                     }
 
                     Button(
-                        onClick = { taskViewModel.logout() },
+                        onClick = { userViewModel.logout() },
                         colors = ButtonDefaults.buttonColors(MaterialTheme.colorScheme.error)
                     ) {
                         Text("Logout")

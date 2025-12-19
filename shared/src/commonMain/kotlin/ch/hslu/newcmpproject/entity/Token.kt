@@ -1,16 +1,10 @@
 package ch.hslu.newcmpproject.entity
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonIgnoreUnknownKeys
 
 @Serializable
 data class Token(val value: String)
-
-@Serializable
-@JsonIgnoreUnknownKeys
-data class TokenPayload(
-    val userId: Long,
-    val userName: String
-)
 
 
 fun decodeBase64Url(input: String): ByteArray {

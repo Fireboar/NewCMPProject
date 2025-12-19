@@ -12,7 +12,9 @@ data class User(
     @SerialName("password")
     val passwordHash: String,
     @SerialName("salt")
-    val salt: String
+    val salt: String,
+    @SerialName("role")
+    val role: String
 )
 
 

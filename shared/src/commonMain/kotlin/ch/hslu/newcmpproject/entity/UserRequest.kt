@@ -6,13 +6,14 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class UpdateUsernameRequest(
     @SerialName("username")
-    val username: String
+    val username: String,
+    @SerialName("userId")
+    val userId: Long? = null // optional, nur für Admins
 )
 
 @Serializable
 data class UpdatePasswordRequest(
-    @SerialName("oldPassword")
-    val oldPassword: String,
-    @SerialName("newPassword")
+    val userId: Long? = null,
+    val oldPassword: String? = null,
     val newPassword: String
 )

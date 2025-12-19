@@ -8,14 +8,17 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import ch.hslu.newcmpproject.viewmodel.TaskViewModel
+import ch.hslu.newcmpproject.viewmodel.UserViewModel
 
 
 @Composable
 fun UserScreen(
     taskViewModel: TaskViewModel,
+    userViewModel: UserViewModel,
     paddingValues: PaddingValues,
-    onUserClick: (userId: Long) -> Unit
-    /*isAdmin: Boolean // Flag, ob aktueller Nutzer Admin ist*/
+    onUserClick: (userId: Long) -> Unit,
+    onAddUserClick: () -> Unit,
+    isAdmin: Boolean
 ) {
     val scrollState = rememberScrollState()
 
@@ -27,17 +30,18 @@ fun UserScreen(
         // Bestehende Sections
         SyncSection(taskViewModel)
         UserSection(
-            taskViewModel,
+            userViewModel,
             onUserClick
         )
 
         // Admin-Section nur sichtbar für Admins
-        /*if (isAdmin) {
+        if (isAdmin) {
             UserAdminSection(
-                taskViewModel = taskViewModel,
-                onUserClick = onUserClick
+                userViewModel = userViewModel,
+                onUserClick = onUserClick,
+                onAddUserClick = onAddUserClick
             )
-        }*/
+        }
     }
 }
 

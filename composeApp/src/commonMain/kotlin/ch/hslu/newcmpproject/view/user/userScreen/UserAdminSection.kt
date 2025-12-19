@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -12,49 +13,79 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import ch.hslu.newcmpproject.viewmodel.TaskViewModel
+import ch.hslu.newcmpproject.viewmodel.UserViewModel
 
 @Composable
 fun UserAdminSection(
-    taskViewModel: TaskViewModel,
-    onUserClick: (userId: Long) -> Unit
+    userViewModel: UserViewModel,
+    onUserClick: (userId: Long) -> Unit,
+    onAddUserClick: () -> Unit,
 ) {
-    Column(modifier = Modifier.padding(top = 24.dp)) {
-        Text(
-            "Admin Section",
-            style = MaterialTheme.typography.titleLarge,
-            modifier = Modifier.padding(bottom = 16.dp)
-        )
+    val currentUser = userViewModel.currentUser.value
+    val isAdmin = currentUser?.role == "ADMIN"
 
-        Button(
-            onClick = { /* Logik zum neuen User hinzufügen */ },
-            modifier = Modifier.fillMaxWidth()
+    if (!isAdmin) return // Nicht-Admin: nichts anzeigen
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 24.dp),
+        horizontalArrangement = Arrangement.Center // Zentriert die Column
+    ) {
+        Column(
+            modifier = Modifier
+                .width(400.dp) // Feste Breite für mittige Darstellung
         ) {
-            Text("Add User")
-        }
+            Text(
+                "Admin Section",
+                style = MaterialTheme.typography.titleLarge,
+                modifier = Modifier.padding(bottom = 16.dp)
+            )
 
-        Spacer(modifier = Modifier.height(8.dp))
-
-        // Beispiel: Liste existierender User (nur ID und Name)
-        /*taskViewModel.allUsers.forEach { user ->
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Text("${user.userName} (${user.userId})")
+                Button(
+                    onClick = { onAddUserClick() },
+                    modifier = Modifier.weight(2f)
+                ) {
+                    Text("Add User")
+                }
 
-                Row {
-                    Button(onClick = { onUserClick(user.userId) }) {
-                        Text("Edit")
-                    }
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Button(onClick = { taskViewModel.deleteUser(user.userId) }) {
-                        Text("Delete")
+                Button(
+                    onClick = { userViewModel.loadAllUsers() },
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text("Load Users")
+                }
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            val users by userViewModel.allUsers.collectAsState()
+            Column {
+                users.forEach { user ->
+                    Row(
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 4.dp)
+                    ) {
+                        Text(user.userName)
+                        Row {
+                            Button(onClick = { onUserClick(user.userId) }) { Text("Edit") }
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Button(onClick = { userViewModel.deleteUser(user.userId) }) { Text("Delete") }
+                        }
                     }
                 }
             }
-        }*/
+        }
     }
 }

@@ -23,11 +23,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import ch.hslu.newcmpproject.viewmodel.SyncViewModel
 import ch.hslu.newcmpproject.viewmodel.TaskViewModel
+import ch.hslu.newcmpproject.viewmodel.UserViewModel
 
 @Composable
 fun LoginScreen(
-    taskViewModel: TaskViewModel,
+    userViewModel: UserViewModel,
+    syncViewModel: SyncViewModel,
     paddingValues: PaddingValues
 ) {
     var username by remember { mutableStateOf("") }
@@ -78,12 +81,12 @@ fun LoginScreen(
                 isLoading = true
                 errorMessage = null
 
-                taskViewModel.login(username, password)
+                userViewModel.login(username, password)
 
                 // Kurze Verzögerung, um den State zu aktualisieren
                 // oder besser: ViewModel sollte Login-Status als StateFlow haben
-                if (!taskViewModel.isLoggedIn.value) {
-                    if (!taskViewModel.isServerOnline.value) {
+                if (!userViewModel.isLoggedIn.value) {
+                    if (!syncViewModel.isServerOnline.value) {
                         errorMessage = "Server offline – du kannst offline fortfahren."
                     } else {
                         errorMessage = "Username oder Passwort falsch"
@@ -101,11 +104,11 @@ fun LoginScreen(
         Spacer(modifier = Modifier.height(8.dp))
 
         // Offline-Button nur anzeigen, wenn Server offline ist
-        if (!taskViewModel.isServerOnline.value) {
+        if (!syncViewModel.isServerOnline.value) {
             Button(
                 onClick = {
                     // Offline-Login: nur lokal anmelden
-                    taskViewModel.manualOfflineLogin(username)
+                    userViewModel.manualOfflineLogin(username)
                 },
                 modifier = Modifier.fillMaxWidth(),
                 colors = ButtonDefaults.buttonColors(containerColor = Color.Gray)

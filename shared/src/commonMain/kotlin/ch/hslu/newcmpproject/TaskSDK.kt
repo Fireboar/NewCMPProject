@@ -3,8 +3,9 @@ package ch.hslu.newcmpproject
 import ch.hslu.newcmpproject.cache.Database
 import ch.hslu.newcmpproject.entity.Task
 import ch.hslu.newcmpproject.entity.Token
-import ch.hslu.newcmpproject.entity.TokenPayload
 import ch.hslu.newcmpproject.entity.TokenStorage
+import ch.hslu.newcmpproject.entity.UserSimple
+import ch.hslu.newcmpproject.entity.UserStorage
 import ch.hslu.newcmpproject.entity.decodeBase64UrlToString
 import ch.hslu.newcmpproject.network.TaskApi
 import kotlinx.serialization.json.Json
@@ -12,73 +13,144 @@ import kotlinx.serialization.json.Json
 
 class TaskSDK(val database: Database, val api: TaskApi) {
 
-    val tokenStorage = TokenStorage()
+    private val json = Json {
+        ignoreUnknownKeys = true
+    }
 
+    val tokenStorage = TokenStorage()
     val token: Token?
         get() = tokenStorage.loadToken()?.let { Token(it) }
 
-    val userId: Long
-        get() = tokenStorage.loadUserId() ?: throw Exception("User not logged in")
+    // User
+    val userStorage = UserStorage()
 
-    val username: String
-        get() = tokenStorage.loadUsername() ?: throw Exception("User not logged in")
+    val currentUser: UserSimple?
+        get() = userStorage.loadUser()
 
 
+    val userId: Long?
+        get() = currentUser?.userId
 
-    private fun extractUserIdFromToken(token: String): Long {
-        val payloadBase64 = token.split(".")[1]
+    val username: String?
+        get() = currentUser?.userName
+
+
+    private fun extractUserFromToken(token: String): UserSimple? {
+        val parts = token.split(".")
+        if (parts.size < 2) {
+            return null
+        }
+
+        val payloadBase64 = parts[1]
         val decodedJson = decodeBase64UrlToString(payloadBase64)
-        return Json.decodeFromString<TokenPayload>(decodedJson).userId
+        val payload = try {
+            json.decodeFromString<UserSimple>(decodedJson)
+        } catch (e: Exception) {
+            return null
+        }
+
+        return UserSimple(
+            userId = payload.userId,
+            userName = payload.userName,
+            role = payload.role
+        )
     }
 
-    private fun extractUsernameFromToken(token: String): String {
-        val payloadBase64 = token.split(".")[1]
-        val decodedJson = decodeBase64UrlToString(payloadBase64)
-        return Json.decodeFromString<TokenPayload>(decodedJson).userName
+    suspend fun isServerOnline():Boolean{
+        return api.isServerOnline()
     }
-
 
     suspend fun login(username: String, password: String): Boolean {
         val token = api.login(username, password)
+        if (token.value.isBlank()) return false
 
-        return if (token.value.isNotBlank()) {
-            tokenStorage.saveToken(token.value)
-            tokenStorage.saveUserId(extractUserIdFromToken(token.value))
-            tokenStorage.saveUsername(extractUsernameFromToken(token.value))
-            true
-        } else {
-            false
-        }
+        tokenStorage.saveToken(token.value)
+
+        val user = extractUserFromToken(token.value) ?: return false
+        userStorage.saveUser(user)
+
+        return true
     }
 
     fun logout() {
         tokenStorage.clearToken()
+        userStorage.clearUser()
     }
 
-    suspend fun updateUsername(newUsername: String): Boolean {
+    suspend fun updateUsername(userId: Long, newUsername: String): Boolean {
         val currentToken = token ?: return false
-        val updatedToken = api.updateUsername(currentToken, newUsername)
+        val isAdmin = currentUser?.role == "ADMIN"
 
-        tokenStorage.saveToken(updatedToken.value)
-        tokenStorage.saveUsername(extractUsernameFromToken(updatedToken.value))
+        // PUT-Request
+        val response = api.updateUsername(
+            token = currentToken,
+            userId = if (isAdmin) userId else null, // null = eigener User
+            newUsername = newUsername
+        )
+
+        // Prüfen, ob Server OK gesendet hat
+        if (!response.isSuccessful) return false
+
+        // Neues Token nur speichern, falls Self-Update
+        response.token?.let { returnedToken ->
+            tokenStorage.saveToken(returnedToken)
+            extractUserFromToken(returnedToken)?.let { userStorage.saveUser(it) }
+        }
+
         return true
     }
 
 
-    suspend fun updatePassword(oldPassword: String, newPassword: String): Boolean {
+
+    suspend fun updatePassword(
+        userId: Long,
+        oldPassword: String,
+        newPassword: String
+    ): Boolean {
         val currentToken = token ?: return false
+        val isAdmin = currentUser?.role == "ADMIN"
 
-        // API-Aufruf
-        val success = api.updatePassword(currentToken, oldPassword, newPassword)
-        return success
+        return api.updatePassword(
+            token = currentToken,
+            userId = if (isAdmin) userId else null,
+            oldPassword = oldPassword,
+            newPassword = newPassword
+        )
     }
 
+
+    // User Admin
+
+    suspend fun addUser(username: String, password: String, role: String = "USER"): Boolean {
+        val currentToken = token ?: return false
+        return api.addUser(currentToken, username, password, role)
+    }
+    suspend fun getAllUsers(): List<UserSimple> {
+        val currentToken = token ?: return emptyList()
+        return api.getAllUsers(currentToken)
+    }
+
+    suspend fun getUserWithId(userId: Long): UserSimple? {
+        val currentToken = token ?: return null
+        return api.getUserWithId(currentToken, userId)
+    }
+
+    suspend fun deleteUser(userId: Long): Boolean {
+        val currentToken = token ?: return false
+        return api.deleteUser(currentToken, userId)
+    }
+
+
+    // TASKS
     suspend fun getTasks(): List<Task> {
-        return database.getTasks(userId)
+        val id = userId ?: return emptyList() // Kein User → keine Tasks laden
+        return database.getTasks(id)
     }
+
 
     suspend fun addTask(task: Task, isServerOnline: Boolean): Boolean {
-        val taskWithUserID = task.copy(userId=userId)
+        val id = userId ?: return false
+        val taskWithUserID = task.copy(userId = id)
         val newTask = database.insertTask(taskWithUserID)
 
         val currentToken = token ?: return false
@@ -86,7 +158,8 @@ class TaskSDK(val database: Database, val api: TaskApi) {
     }
 
     suspend fun updateTask(task: Task, isServerOnline: Boolean): Boolean {
-        val taskWithUserID = task.copy(userId=userId)
+        val id = userId ?: return false
+        val taskWithUserID = task.copy(userId = id)
         database.updateTask(taskWithUserID)
 
         val currentToken = token ?: return false
@@ -94,37 +167,36 @@ class TaskSDK(val database: Database, val api: TaskApi) {
     }
 
     suspend fun deleteTask(task: Task, isServerOnline: Boolean): Boolean {
-        val taskWithUserID = task.copy(userId=userId)
-
+        val id = userId ?: return false
+        val taskWithUserID = task.copy(userId = id)
         database.deleteTask(taskWithUserID)
+
         val currentToken = token ?: return false
         return if (isServerOnline) api.deleteTask(currentToken, task.id.toLong()) else false
     }
 
-    suspend fun isServerOnline(): Boolean {
-        return api.isServerOnline()
-    }
-
     suspend fun isInSync(): Boolean {
+        val id = userId ?: return false
         val currentToken = token ?: return false
-        println("USING TOKEN: $currentToken")
         val serverTasks = api.getTasks(currentToken)
         if (serverTasks.isEmpty()) return false
-        val localTasks = database.getTasks(userId)
+        val localTasks = database.getTasks(id)
         return localTasks == serverTasks
     }
 
     suspend fun postTasks(isServerOnline: Boolean): Boolean {
+        val id = userId ?: return false
         val currentToken = token ?: return false
-        return if (isServerOnline) api.replaceTasks(currentToken, database.getTasks(userId)) else false
+        return if (isServerOnline) api.replaceTasks(currentToken, database.getTasks(id)) else false
     }
 
     suspend fun pullTasks(isServerOnline: Boolean): Boolean {
+        val id = userId ?: return false
         val currentToken = token ?: return false
         if (isServerOnline) {
             val serverTasks = api.getTasks(currentToken)
             if (serverTasks.isNotEmpty()) {
-                database.replaceTasks(userId, serverTasks)
+                database.replaceTasks(id, serverTasks)
                 return true
             }
         }
@@ -132,15 +204,16 @@ class TaskSDK(val database: Database, val api: TaskApi) {
     }
 
     suspend fun mergeTasks(isServerOnline: Boolean): Boolean {
+        val id = userId ?: return false
         val currentToken = token ?: return false
         if (isServerOnline) {
             val serverTasks = api.getTasks(currentToken)
-            val localTasks = database.getTasks(userId)
+            val localTasks = database.getTasks(id)
 
             val mergedTasks = (localTasks + serverTasks)
                 .distinctBy { it.id }
 
-            database.replaceTasks(userId, mergedTasks)
+            database.replaceTasks(id, mergedTasks)
             return api.replaceTasks(currentToken, mergedTasks)
         }
         return false

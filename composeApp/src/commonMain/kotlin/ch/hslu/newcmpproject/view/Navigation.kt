@@ -21,22 +21,23 @@ import ch.hslu.newcmpproject.view.bars.TopBar
 import ch.hslu.newcmpproject.view.user.loginScreen.LoginScreen
 import ch.hslu.newcmpproject.view.task.taskDetailScreen.TaskDetailScreen
 import ch.hslu.newcmpproject.view.task.taskDetailScreen.TaskDetailScreenDesktopWeb
+import ch.hslu.newcmpproject.view.user.addUser.AddUserScreen
 import ch.hslu.newcmpproject.view.user.editUserScreen.UserDetailScreen
 import ch.hslu.newcmpproject.view.user.userScreen.UserScreen
+import ch.hslu.newcmpproject.viewmodel.SyncViewModel
 import ch.hslu.newcmpproject.viewmodel.TaskViewModel
+import ch.hslu.newcmpproject.viewmodel.UserViewModel
 
 enum class PlatformType { ANDROID, IOS, DESKTOP, WEB }
 
 expect fun getPlatform(): PlatformType
 
-enum class ScreenType { KANBAN, ADDTASK,  TASKDETAIL, USER, USERDETAIL, LOGIN}
+enum class ScreenType { KANBAN, ADDTASK,  TASKDETAIL, USER, ADDUSER, USERDETAIL, LOGIN}
 
 @Composable
-fun Navigation(taskViewModel: TaskViewModel) {
+fun Navigation(taskViewModel: TaskViewModel, userViewModel: UserViewModel, syncViewModel: SyncViewModel) {
 
-    val isLoggedIn by taskViewModel
-        .isLoggedIn
-        .collectAsState()
+    val isLoggedIn by userViewModel.isLoggedIn.collectAsState()
 
     var wasLoggedIn by remember { mutableStateOf(isLoggedIn) }
 
@@ -44,10 +45,13 @@ fun Navigation(taskViewModel: TaskViewModel) {
         mutableStateOf(if (isLoggedIn) ScreenType.KANBAN else ScreenType.LOGIN)
     }
 
-
     var currentTaskId by rememberSaveable { mutableStateOf<Long?>(null) }
 
     var currentUserId by rememberSaveable {mutableStateOf<Long?>(null)}
+
+    val currentUser = userViewModel.currentUser.value
+    val isAdmin = currentUser?.role == "ADMIN"
+
 
     fun navigateTo(screen: ScreenType, taskId: Long? = null, userId: Long? = null) {
         currentScreen = screen
@@ -80,7 +84,7 @@ fun Navigation(taskViewModel: TaskViewModel) {
             if(isLoggedIn){
                 Column (Modifier.fillMaxWidth()) {
 
-                    SuccessMessage(taskViewModel)
+                    SuccessMessage(syncViewModel)
 
                     BottomNavigationBar(
                         currentScreen = currentScreen,
@@ -125,22 +129,29 @@ fun Navigation(taskViewModel: TaskViewModel) {
             ScreenType.USER ->
                 UserScreen(
                     taskViewModel,
+                    userViewModel,
                     paddingValues,
-                    onUserClick = { userId -> navigateTo(ScreenType.USERDETAIL, userId = userId) }
+                    onUserClick = { userId -> navigateTo(ScreenType.USERDETAIL, userId = userId) },
+                    isAdmin = isAdmin,
+                    onAddUserClick = { navigateTo(ScreenType.ADDUSER) }
+                )
+
+            ScreenType.ADDUSER ->
+                AddUserScreen(
+                    userViewModel,
+                    paddingValues
                 )
 
             ScreenType.USERDETAIL -> currentUserId?.let{ userId ->
                 UserDetailScreen(
-                    taskViewModel,
+                    userViewModel,
                     paddingValues,
-                    currentUserId
+                    userId
                 )
             }
 
-
-            ScreenType.LOGIN -> LoginScreen(taskViewModel,paddingValues)
+            ScreenType.LOGIN -> LoginScreen(userViewModel,syncViewModel, paddingValues)
 
         }
-
     }
 }

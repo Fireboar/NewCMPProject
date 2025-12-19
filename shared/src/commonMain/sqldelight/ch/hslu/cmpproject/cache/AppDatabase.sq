@@ -3,18 +3,23 @@ CREATE TABLE IF NOT EXISTS Users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     username TEXT NOT NULL UNIQUE,
     passwordHash TEXT NOT NULL,
-    salt TEXT NOT NULL
+    salt TEXT NOT NULL,
+    role TEXT NOT NULL DEFAULT 'USER'
 );
 
+
 insertUser:
-INSERT INTO Users(username, passwordHash, salt)
-VALUES (?, ?,?);
+INSERT INTO Users(username, passwordHash, salt, role)
+VALUES (?, ?, ?, ?);
 
 selectUserByUsername:
 SELECT * FROM Users WHERE username = ?;
 
 selectUserById:
 SELECT * FROM Users WHERE id = ?;
+
+selectAllUsers:
+SELECT * FROM Users;
 
 updateUsername:
 UPDATE Users
@@ -24,6 +29,10 @@ WHERE id = ?;
 updatePassword:
 UPDATE Users
 SET passwordHash = ?, salt = ?
+WHERE id = ?;
+
+deleteUserById:
+DELETE FROM Users
 WHERE id = ?;
 
 CREATE TABLE IF NOT EXISTS Tasks (
