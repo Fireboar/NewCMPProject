@@ -118,12 +118,7 @@ fun TaskFormDesktopWeb(
             .padding(paddingValues)
             .padding(16.dp)
             .verticalScroll(rememberScrollState())
-            .onPreviewKeyEvent { event ->
-                if (event.type == KeyEventType.KeyDown && event.key == Key.Enter) {
-                    submit()
-                    true
-                } else false
-            }
+
     ) {
 
         // ----- TITLE -----
@@ -138,6 +133,12 @@ fun TaskFormDesktopWeb(
                 .onPreviewKeyEvent { event ->
                     if (event.type == KeyEventType.KeyDown && event.key == Key.Tab) {
                         descriptionFocus.requestFocus()
+                        true
+                    } else false
+                }
+                .onPreviewKeyEvent { event ->
+                    if (event.type == KeyEventType.KeyDown && event.key == Key.Enter) {
+                        submit()
                         true
                     } else false
                 }
@@ -175,6 +176,12 @@ fun TaskFormDesktopWeb(
                         true
                     } else false
                 }
+                .onPreviewKeyEvent { event ->
+                    if (event.type == KeyEventType.KeyDown && event.key == Key.Enter) {
+                        submit()
+                        true
+                    } else false
+                }
         )
 
         // ----- TIME -----
@@ -188,6 +195,12 @@ fun TaskFormDesktopWeb(
                 .onPreviewKeyEvent { event ->
                     if (event.type == KeyEventType.KeyDown && event.key == Key.Tab) {
                         dropDownFocus.requestFocus()
+                        true
+                    } else false
+                }
+                .onPreviewKeyEvent { event ->
+                    if (event.type == KeyEventType.KeyDown && event.key == Key.Enter) {
+                        submit()
                         true
                     } else false
                 }
