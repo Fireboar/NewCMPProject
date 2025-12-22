@@ -130,6 +130,7 @@ fun Navigation(taskViewModel: TaskViewModel, userViewModel: UserViewModel, syncV
                 UserScreen(
                     taskViewModel,
                     userViewModel,
+                    syncViewModel,
                     paddingValues,
                     onUserClick = { userId -> navigateTo(ScreenType.USERDETAIL, userId = userId) },
                     isAdmin = isAdmin,

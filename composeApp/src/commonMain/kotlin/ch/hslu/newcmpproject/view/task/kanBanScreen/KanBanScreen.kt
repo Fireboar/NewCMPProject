@@ -3,10 +3,13 @@ package ch.hslu.newcmpproject.view.task.kanBanScreen
 import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
@@ -34,56 +37,94 @@ fun KanbanScreen(
     onTaskClick: (Task) -> Unit
 ) {
     val tasks by taskViewModel.tasks.collectAsState()
-    val horizontalScroll = rememberScrollState()
 
-    Column(
+    BoxWithConstraints(
         modifier = Modifier
-            .fillMaxSize().padding(paddingValues)
+            .fillMaxSize()
+            .padding(paddingValues)
     ) {
+        val screenWidth = maxWidth
+        val isWideScreen = screenWidth >= 900.dp   // 👈 Web/Desktop
+        val columnWidth = if (isWideScreen) 0.dp else 300.dp
+
+        val rowModifier = if (isWideScreen) {
+            Modifier.fillMaxWidth()
+        } else {
+            Modifier
+                .horizontalScroll(rememberScrollState())
+        }
+
         Row(
-            modifier = Modifier
-                .weight(1f)
-                .horizontalScroll(horizontalScroll)
-                .padding(16.dp),
+            modifier = rowModifier.padding(16.dp),
             horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             statuses.forEach { status ->
-                val verticalScroll = rememberScrollState()
-
-                val columnColor = when (status) {
-                    "To Do" -> Color(0xFF90CAF9)
-                    "In Progress" -> Color(0xFFFFF9C4)
-                    "Done" -> Color(0xFFC8E6C9)
+                val columnBackgroundColor = when (status) {
+                    "To Do" -> Color(0xFF90CAF9).copy(alpha = 0.3f)
+                    "In Progress" -> Color(0xFFFFF9C4).copy(alpha = 0.3f)
+                    "Done" -> Color(0xFFC8E6C9).copy(alpha = 0.3f)
                     else -> MaterialTheme.colorScheme.surface
                 }
 
+                val verticalScroll = rememberScrollState()
+
+                val columnModifier = if (isWideScreen) {
+                    Modifier
+                        .weight(1f)
+                        .fillMaxHeight() // 👈 Column nimmt volle Höhe ein
+                } else {
+                    Modifier
+                        .width(300.dp)
+                        .fillMaxHeight() // 👈 auch auf Mobile volle Höhe
+                }
+
                 Column(
-                    modifier = Modifier
-                        .width(COLUMN_WIDTH_DP)
-                        .verticalScroll(verticalScroll)
-                        .background(columnColor)
+                    modifier = columnModifier
+                        .background(columnBackgroundColor)
                         .padding(8.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Text(text = status, style = MaterialTheme.typography.titleMedium)
-                    tasks.filter { it.status == status }
-                        .sortedBy { it.toLocalDateTimeOrNull() }
-                        .forEach { task ->
-                            DraggableTaskItem(
-                                task = task,
-                                columnWidthDp = COLUMN_WIDTH_DP,
-                                onDelete = { taskViewModel.deleteTask(task) },
-                                onMove = {
-                                        targetStatus ->
-                                    taskViewModel.moveTask(task, targetStatus)
-                                },
-                                onClick = { onTaskClick(task) }
-                            )
-                        }
+                    val headerColor = when (status) {
+                        "To Do" -> Color(0xFF90CAF9)
+                        "In Progress" -> Color(0xFFFFF9C4)
+                        "Done" -> Color(0xFFC8E6C9)
+                        else -> MaterialTheme.colorScheme.surface
+                    }
 
+                    Text(
+                        text = status,
+                        style = MaterialTheme.typography.titleMedium,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(headerColor)
+                            .padding(4.dp)
+                    )
+
+                    // Scrollbarer Container für die Tasks
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f) // nimmt restliche Höhe der Column ein
+                            .verticalScroll(verticalScroll),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        tasks.filter { it.status == status }
+                            .sortedBy { it.toLocalDateTimeOrNull() }
+                            .forEach { task ->
+                                DraggableTaskItem(
+                                    task = task,
+                                    columnWidthDp = columnWidth.takeIf { !isWideScreen } ?: 300.dp,
+                                    onDelete = { taskViewModel.deleteTask(task) },
+                                    onMove = { targetStatus -> taskViewModel.moveTask(task, targetStatus) },
+                                    onClick = { onTaskClick(task) }
+                                )
+                            }
+                    }
                 }
             }
+
         }
     }
 }
+
 

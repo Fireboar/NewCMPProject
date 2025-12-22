@@ -27,6 +27,9 @@ import ch.hslu.newcmpproject.viewmodel.SyncViewModel
 import ch.hslu.newcmpproject.viewmodel.TaskViewModel
 import ch.hslu.newcmpproject.viewmodel.UserViewModel
 
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.widthIn
+
 @Composable
 fun LoginScreen(
     userViewModel: UserViewModel,
@@ -38,82 +41,76 @@ fun LoginScreen(
     var errorMessage by remember { mutableStateOf<String?>(null) }
     var isLoading by remember { mutableStateOf(false) }
 
-    Column(
+    Box(
         modifier = Modifier
             .fillMaxSize()
-            .padding(paddingValues)
-            .padding(16.dp),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
+            .padding(paddingValues),
+        contentAlignment = Alignment.Center
     ) {
-        Text(text = "Login", style = MaterialTheme.typography.headlineMedium)
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        OutlinedTextField(
-            value = username,
-            onValueChange = { username = it },
-            label = { Text("Username") },
-            singleLine = true,
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        OutlinedTextField(
-            value = password,
-            onValueChange = { password = it },
-            label = { Text("Password") },
-            singleLine = true,
-            visualTransformation = PasswordVisualTransformation(),
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        if (errorMessage != null) {
-            Text(text = errorMessage!!, color = Color.Red)
-            Spacer(modifier = Modifier.height(8.dp))
-        }
-
-        Button(
-            onClick = {
-                isLoading = true
-                errorMessage = null
-
-                userViewModel.login(username, password)
-
-                // Kurze Verzögerung, um den State zu aktualisieren
-                // oder besser: ViewModel sollte Login-Status als StateFlow haben
-                if (!userViewModel.isLoggedIn.value) {
-                    if (!syncViewModel.isServerOnline.value) {
-                        errorMessage = "Server offline – du kannst offline fortfahren."
-                    } else {
-                        errorMessage = "Username oder Passwort falsch"
-                    }
-                }
-
-                isLoading = false
-            },
-            modifier = Modifier.fillMaxWidth(),
-            enabled = !isLoading
+        Column(
+            modifier = Modifier
+                .widthIn(max = 360.dp) // 👈 nur mittlere Kolonne
+                .padding(16.dp),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text(if (isLoading) "Logging in..." else "Login")
-        }
 
-        Spacer(modifier = Modifier.height(8.dp))
+            OutlinedTextField(
+                value = username,
+                onValueChange = { username = it },
+                label = { Text("Username") },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth()
+            )
 
-        // Offline-Button nur anzeigen, wenn Server offline ist
-        if (!syncViewModel.isServerOnline.value) {
+            Spacer(modifier = Modifier.height(8.dp))
+
+            OutlinedTextField(
+                value = password,
+                onValueChange = { password = it },
+                label = { Text("Password") },
+                singleLine = true,
+                visualTransformation = PasswordVisualTransformation(),
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            if (errorMessage != null) {
+                Text(errorMessage!!, color = Color.Red)
+                Spacer(modifier = Modifier.height(8.dp))
+            }
+
             Button(
                 onClick = {
-                    // Offline-Login: nur lokal anmelden
-                    userViewModel.manualOfflineLogin(username)
+                    isLoading = true
+                    errorMessage = null
+                    userViewModel.login(username, password)
+
+                    if (!userViewModel.isLoggedIn.value) {
+                        errorMessage =
+                            if (!syncViewModel.isServerOnline.value)
+                                "Server offline – du kannst offline fortfahren."
+                            else
+                                "Username oder Passwort falsch"
+                    }
+                    isLoading = false
                 },
                 modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.buttonColors(containerColor = Color.Gray)
+                enabled = !isLoading
             ) {
-                Text("Offline fortfahren")
+                Text(if (isLoading) "Logging in..." else "Login")
+            }
+
+            if (!syncViewModel.isServerOnline.value) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Button(
+                    onClick = { userViewModel.manualOfflineLogin(username) },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color.Gray)
+                ) {
+                    Text("Offline fortfahren")
+                }
             }
         }
     }
