@@ -165,7 +165,7 @@ fun TaskFormDesktopWeb(
         OutlinedTextField(
             value = dueDate,
             onValueChange = { dueDate = it },
-            label = { Text("Fälligkeitsdatum") },
+            label = { Text("Fälligkeitsdatum (dd.mm.jjjj)") },
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(8.dp)
@@ -188,7 +188,7 @@ fun TaskFormDesktopWeb(
         OutlinedTextField(
             value = dueTime,
             onValueChange = { dueTime = it },
-            label = { Text("Fälligkeitszeit") },
+            label = { Text("Fälligkeitszeit (hh:mm)") },
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(8.dp)

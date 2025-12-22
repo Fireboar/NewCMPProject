@@ -119,14 +119,14 @@ fun TaskForm(
         OutlinedTextField(
             value = dueDate,
             onValueChange = { dueDate = it },
-            label = { Text("Fälligkeitsdatum") },
+            label = { Text("Fälligkeitsdatum (dd.mm.jjjj)") },
             modifier = Modifier.fillMaxWidth().padding(8.dp)
         )
 
         OutlinedTextField(
             value = dueTime,
             onValueChange = { dueTime = it },
-            label = { Text("Fälligkeitszeit") },
+            label = { Text("Fälligkeitszeit (hh:mm)") },
             modifier = Modifier.fillMaxWidth().padding(8.dp)
         )
 
