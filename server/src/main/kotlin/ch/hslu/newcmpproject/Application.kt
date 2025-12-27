@@ -42,12 +42,18 @@ import kotlinx.serialization.json.Json
 const val SERVER_PORT = 8080
 
 fun main() {
-    embeddedServer(Netty, port = SERVER_PORT, host = "0.0.0.0", module = Application::module)
+    embeddedServer(
+        factory = Netty,
+        port = SERVER_PORT,
+        host = "0.0.0.0",
+        module = Application::module)
         .start(wait = true)
 }
 
+// Folgender Code
+
 object JwtConfig {
-    private const val secret = "super-secret-key" // sicherer Schlüssel, z.B. aus env
+    private const val secret = "super-secret-key" // sicherer Schlüssel
     private const val issuer = "ch.hslu.newcmpproject"
     private const val audience = "ch.hslu.newcmpproject.audience"
     const val realm = "Access to tasks"
@@ -58,7 +64,7 @@ object JwtConfig {
             .withIssuer(issuer)
             .withClaim("userId", userId)
             .withClaim("userName", username)
-            .withClaim("role", role)      // ⚡ hier hinzufügen
+            .withClaim("role", role)
             .sign(Algorithm.HMAC256(secret))
     }
 
@@ -68,6 +74,8 @@ object JwtConfig {
         .withIssuer(issuer)
         .build()
 }
+
+// Folgender Code
 
 
 suspend fun Application.module() {
@@ -103,6 +111,8 @@ suspend fun Application.module() {
     AppDatabase.Schema.create(driver).await()
     val database = Database(driver)
 
+    // Folgender Code
+
 
     // Prüfen, ob schon ein User existiert
     val existingUser = database.getUserByUsername("admin")
@@ -110,15 +120,6 @@ suspend fun Application.module() {
         username = "admin", password = "123",
         role = "ADMIN"
     )
-
-    // Verify that it exists
-    val adminUser = database.getUserByUsername("admin")
-    if (adminUser != null) {
-        println("Admin user exists: id=${adminUser.id}, username=${adminUser.username}, password=${adminUser.passwordHash}, salt=${adminUser.salt} role=${adminUser.role}")
-    } else {
-        println("Failed to create admin user!")
-    }
-
 
     // Prüfen, ob Tasks für diesen User existieren
     if (database.getTasks(thisId).isEmpty()) {
@@ -133,13 +134,16 @@ suspend fun Application.module() {
         database.insertTask(defaultTask)
     }
 
+    // Folgender Code
+
     fun JWTPrincipal.isAdmin(): Boolean =
         payload.getClaim("role").asString() == "ADMIN"
 
+    // Folgender Code
 
     routing {
         post("/login") {
-            val loginRequest = call.receive<LoginRequest>() // z.B. username + password
+            val loginRequest = call.receive<LoginRequest>()
             val user = database.getUserByUsername(loginRequest.username)
 
             if (user == null || !verifyPassword(loginRequest.password, user)) {
@@ -157,9 +161,11 @@ suspend fun Application.module() {
             call.respondText("OK")
         }
 
-        authenticate("auth-jwt") {
-            // Admin
+        // Folgender Code
 
+        authenticate("auth-jwt") {
+
+            /* ADMIN-Section */
             // READ ALL USERS
             get("/users") {
                 val principal = call.principal<JWTPrincipal>()
@@ -180,6 +186,9 @@ suspend fun Application.module() {
                 })
             }
 
+            // Folgender Code
+
+            // READ SINGLE
             get("/users/{id}") {
                 val principal = call.principal<JWTPrincipal>()
                     ?: return@get call.respond(HttpStatusCode.Unauthorized)
@@ -189,16 +198,22 @@ suspend fun Application.module() {
 
                 // ID aus der URL lesen
                 val userId = call.parameters["id"]?.toLongOrNull()
-                    ?: return@get call.respond(HttpStatusCode.BadRequest, "Invalid user id")
+                    ?: return@get call.respond(
+                        HttpStatusCode.BadRequest,
+                        "Invalid user id")
 
                 // Zugriff prüfen: entweder Admin oder eigener User
                 if (requesterRole != "ADMIN" && requesterId != userId) {
-                    return@get call.respond(HttpStatusCode.Forbidden, "Access denied")
+                    return@get call.respond(
+                        HttpStatusCode.Forbidden,
+                        "Access denied")
                 }
 
                 // User aus DB holen
                 val user = database.getUserById(userId)
-                    ?: return@get call.respond(HttpStatusCode.NotFound, "User not found")
+                    ?: return@get call.respond(
+                        HttpStatusCode.NotFound,
+                        "User not found")
 
                 // Nur sichere Daten zurückgeben
                 call.respond(
@@ -210,6 +225,8 @@ suspend fun Application.module() {
                 )
             }
 
+            // Folgender Code
+
 
             // Create
             post("/users") {
@@ -217,14 +234,18 @@ suspend fun Application.module() {
                     ?: return@post call.respond(HttpStatusCode.Unauthorized)
 
                 if (!principal.isAdmin()) {
-                    return@post call.respond(HttpStatusCode.Forbidden, "Admin only")
+                    return@post call.respond(
+                        HttpStatusCode.Forbidden,
+                        "Admin only")
                 }
 
-                val userrequest = call.receive<CreateUserRequest>() // username + password
+                val userrequest = call.receive<CreateUserRequest>()
 
                 val existing = database.getUserByUsername(userrequest.username)
                 if (existing != null) {
-                    return@post call.respond(HttpStatusCode.Conflict, "User already exists")
+                    return@post call.respond(
+                        HttpStatusCode.Conflict,
+                        "User already exists")
                 }
 
                 val userId = database.insertUser(
@@ -244,7 +265,9 @@ suspend fun Application.module() {
                 call.respond(userResponse)
             }
 
-            // User
+            // Folgender Code
+
+            /* USER-Section */
             // UPDATE USERNAME
             put("/user/username") {
                 val principal = call.principal<JWTPrincipal>()
@@ -254,17 +277,21 @@ suspend fun Application.module() {
                 val requesterId = principal.payload.getClaim("userId").asLong()
 
                 val request = call.receive<UpdateUsernameRequest>()
-                val targetUserId = request.userId ?: requesterId  // eigener User, falls keine ID angegeben
+                val targetUserId = request.userId ?: requesterId
 
                 // Nur Admin darf andere User ändern
                 if (targetUserId != requesterId && adminRole != "ADMIN") {
-                    return@put call.respond(HttpStatusCode.Forbidden, "Only admins can update other users")
+                    return@put call.respond(
+                        HttpStatusCode.Forbidden,
+                        "Only admins can update other users")
                 }
 
                 // Prüfen, ob Username bereits existiert
                 val existingUser = database.getUserByUsername(request.username)
                 if (existingUser != null && existingUser.id != targetUserId) {
-                    return@put call.respond(HttpStatusCode.Conflict, "Username already exists")
+                    return@put call.respond(
+                        HttpStatusCode.Conflict,
+                        "Username already exists")
                 }
 
                 // Update durchführen
@@ -274,15 +301,24 @@ suspend fun Application.module() {
 
                 // Neues JWT nur für eigenen User
                 if (targetUserId == requesterId) {
-                    val newToken = JwtConfig.generateToken(targetUser.id, targetUser.username, targetUser.role)
-                    call.respond(HttpStatusCode.OK, mapOf("token" to newToken))
+                    val newToken = JwtConfig.generateToken(
+                        targetUser.id,
+                        targetUser.username,
+                        targetUser.role)
+                    call.respond(
+                        HttpStatusCode.OK,
+                        mapOf("token" to newToken))
                 } else {
-                    call.respond(HttpStatusCode.OK, mapOf("message" to "User updated"))
+                    call.respond(
+                        HttpStatusCode.OK,
+                        mapOf("message" to "User updated"))
                 }
             }
 
+            // Folgender Code
 
-            // Update Password
+
+            // UPDATE PASSWORD
             put("/user/password") {
                 val principal = call.principal<JWTPrincipal>()
                     ?: return@put call.respond(HttpStatusCode.Unauthorized)
@@ -294,11 +330,15 @@ suspend fun Application.module() {
                 val targetUserId = request.userId ?: requesterId
 
                 if (targetUserId != requesterId && adminRole != "ADMIN") {
-                    return@put call.respond(HttpStatusCode.Forbidden, "Only admins can change other users' passwords")
+                    return@put call.respond(
+                        HttpStatusCode.Forbidden,
+                        "Only admins can change other users' passwords")
                 }
 
                 val user = database.getUserById(targetUserId)
-                    ?: return@put call.respond(HttpStatusCode.NotFound, "User not found")
+                    ?: return@put call.respond(
+                        HttpStatusCode.NotFound,
+                        "User not found")
 
                 if (targetUserId == requesterId) {
                     val oldPassword = request.oldPassword
@@ -317,18 +357,27 @@ suspend fun Application.module() {
 
                 val newSalt = generateSalt()
                 val newPasswordHash = hashPasswordWithSalt(request.newPassword, newSalt)
-                database.updatePassword(targetUserId, newPasswordHash, newSalt.joinToString("") { "%02x".format(it) })
+                database.updatePassword(
+                    targetUserId,
+                    newPasswordHash,
+                    newSalt.joinToString("") { "%02x".format(it) })
 
-                call.respond(HttpStatusCode.OK, mapOf("message" to "Password updated"))
+                call.respond(
+                    HttpStatusCode.OK,
+                    mapOf("message" to "Password updated"))
             }
 
-            // Delete
+            // Folgender Code
+
+            // DELETE USER
             delete("/users/{id}") {
                 val principal = call.principal<JWTPrincipal>()
                     ?: return@delete call.respond(HttpStatusCode.Unauthorized)
 
                 if (!principal.isAdmin()) {
-                    return@delete call.respond(HttpStatusCode.Forbidden, "Admin only")
+                    return@delete call.respond(
+                        HttpStatusCode.Forbidden,
+                        "Admin only")
                 }
 
                 val userId = call.parameters["id"]?.toLongOrNull()
@@ -339,7 +388,10 @@ suspend fun Application.module() {
                 call.respond(HttpStatusCode.OK)
             }
 
+            // Folgender Code
 
+
+            /* TASKS */
             // CREATE
             post("/tasks") {
                 val principal = call.principal<JWTPrincipal>()
@@ -356,6 +408,8 @@ suspend fun Application.module() {
                 call.respond(HttpStatusCode.OK, insertedTask)
             }
 
+            // Folgender Code
+
             // READ ALL
             get("/tasks") {
                 val principal = call.principal<JWTPrincipal>()
@@ -365,17 +419,23 @@ suspend fun Application.module() {
                 call.respond(tasks)
             }
 
+            // Folgender Code
+
 
             // UPDATE
             put("/tasks/{id}") {
                 val principal = call.principal<JWTPrincipal>()
-                    ?: return@put call.respond(HttpStatusCode.Unauthorized, "Not authenticated")
+                    ?: return@put call.respond(
+                        HttpStatusCode.Unauthorized,
+                        "Not authenticated")
 
                 val userId = principal.payload.getClaim("userId").asLong()
 
                 // ID aus URL
                 val taskId = call.parameters["id"]?.toLongOrNull()
-                    ?: return@put call.respond(HttpStatusCode.BadRequest, "Invalid task ID")
+                    ?: return@put call.respond(
+                        HttpStatusCode.BadRequest,
+                        "Invalid task ID")
 
                 // Task aus Request Body
                 val updatedTaskData = call.receive<Task>()
@@ -383,7 +443,9 @@ suspend fun Application.module() {
                 // Existenz prüfen
                 val existingTask = database.getTaskById(userId, taskId)
                 if (existingTask == null) {
-                    return@put call.respond(HttpStatusCode.NotFound, "Task with id=$taskId not found")
+                    return@put call.respond(
+                        HttpStatusCode.NotFound,
+                        "Task with id=$taskId not found")
                 }
 
                 // userId aus JWT erzwingen & ID aus URL setzen
@@ -398,34 +460,48 @@ suspend fun Application.module() {
                 call.respond(HttpStatusCode.OK, taskToUpdate)
             }
 
+            // Folgender Code
+
             // DELETE
             delete("/tasks/{id}") {
                 val principal = call.principal<JWTPrincipal>()
-                    ?: return@delete call.respond(HttpStatusCode.Unauthorized, "Not authenticated")
+                    ?: return@delete call.respond(
+                        HttpStatusCode.Unauthorized,
+                        "Not authenticated")
 
                 val userId = principal.payload.getClaim("userId").asLong()
 
                 // ID aus URL prüfen
                 val taskId = call.parameters["id"]?.toLongOrNull()
-                    ?: return@delete call.respond(HttpStatusCode.BadRequest, "Invalid task ID")
+                    ?: return@delete call.respond(
+                        HttpStatusCode.BadRequest,
+                        "Invalid task ID")
 
                 // Existenz prüfen
                 val existingTask = database.getTaskById(userId, taskId)
                 if (existingTask == null) {
-                    return@delete call.respond(HttpStatusCode.NotFound, "Task not found")
+                    return@delete call.respond(
+                        HttpStatusCode.NotFound,
+                        "Task not found")
                 }
 
                 // Task löschen
                 database.deleteTask(existingTask)
 
-                call.respond(HttpStatusCode.OK, mapOf("message" to "Deleted task $taskId"))
+                call.respond(
+                    HttpStatusCode.OK,
+                    mapOf("message" to "Deleted task $taskId"))
             }
+
+            // Folgender Code
 
 
             // REPLACE
             post("/tasks/replace") {
                 val principal = call.principal<JWTPrincipal>()
-                    ?: return@post call.respond(HttpStatusCode.Unauthorized, "Not authenticated")
+                    ?: return@post call.respond(
+                        HttpStatusCode.Unauthorized,
+                        "Not authenticated")
 
                 val userId = principal.payload.getClaim("userId").asLong()
 
@@ -438,7 +514,9 @@ suspend fun Application.module() {
                 // Alle Tasks für diesen User ersetzen
                 database.replaceTasks(userId, safeTasks)
 
-                call.respond(HttpStatusCode.OK, mapOf("message" to "Tasks replaced successfully"))
+                call.respond(
+                    HttpStatusCode.OK,
+                    mapOf("message" to "Tasks replaced successfully"))
             }
         }
 

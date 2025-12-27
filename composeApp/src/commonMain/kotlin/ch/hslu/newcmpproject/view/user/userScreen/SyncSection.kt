@@ -61,7 +61,6 @@ fun SyncSection(taskViewModel: TaskViewModel) {
                         contentDescription = "Pull Tasks"
                     )
                 }
-
             }
 
             // Push Tasks Button
@@ -98,8 +97,8 @@ fun SyncSection(taskViewModel: TaskViewModel) {
                         contentDescription = "Merge Tasks"
                     )
                 }
-
             }
+
         }
     }
 }

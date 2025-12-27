@@ -2,18 +2,22 @@ package ch.hslu.newcmpproject.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import ch.hslu.newcmpproject.TaskSDK
+import ch.hslu.newcmpproject.cache.UserRepository
 import ch.hslu.newcmpproject.entity.TokenStorage
 import ch.hslu.newcmpproject.entity.UserSimple
 import ch.hslu.newcmpproject.entity.UserStorage
-import ch.hslu.newcmpproject.view.user.addUser.UserRole
+import ch.hslu.newcmpproject.network.auth.AuthService
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
-class UserViewModel (private val sdk: TaskSDK, private val syncViewModel: SyncViewModel) : ViewModel(){
-    val userStorage = UserStorage()
-    val tokenStorage = TokenStorage()
+class UserViewModel(
+    private val authService: AuthService,
+    private val userRepository: UserRepository,
+    private val syncViewModel: SyncViewModel,
+    private val userStorage: UserStorage,
+    private val tokenStorage: TokenStorage
+) : ViewModel() {
 
     private val _isLoggedIn = MutableStateFlow(tokenStorage.loadToken() != null)
     val isLoggedIn: StateFlow<Boolean> = _isLoggedIn
@@ -38,42 +42,42 @@ class UserViewModel (private val sdk: TaskSDK, private val syncViewModel: SyncVi
 
     fun loadAllUsers() {
         viewModelScope.launch {
-            val usersFromServer: List<UserSimple> = sdk.getAllUsers()
-            _allUsers.value = usersFromServer
+            _allUsers.value = userRepository.getAllUsers()
         }
     }
 
-    fun loadUser(userId:Long){
+    fun loadUser(userId: Long) {
         viewModelScope.launch {
-            val userFromServer: UserSimple? = sdk.getUserWithId(userId)
-            _selectedUser.value = userFromServer
+            _selectedUser.value = userRepository.getUserWithId(userId)
         }
     }
 
     fun addUser(username: String, password: String, role: String) {
         viewModelScope.launch {
-            val success = sdk.addUser(username, password, role)
-            if(success){
+            val success = userRepository.addUser(username, password, role)
+            if (success) {
                 loadAllUsers()
                 setSyncMessage("User $username erfolgreich hinzugefügt.", true)
+            } else {
+                setSyncMessage("User konnte nicht erstellt werden.", false)
             }
-            else setSyncMessage("User konnte nicht erstellt werden.", false)
         }
     }
 
     fun updateUsername(userId: Long, newUsername: String) {
         viewModelScope.launch {
-            val success = sdk.updateUsername(userId, newUsername)
-            if (success) {
+            val response = userRepository.updateUsername(
+                userId, newUsername
+            )
+            if (response.isSuccessful) {
                 loadAllUsers()
                 loadUser(userId)
 
-                // 🔹 Wenn der eigene User geändert wurde, currentUser aktualisieren
-                if (userId == _currentUser.value?.userId) {
-                    _currentUser.value = sdk.currentUser
+                // Wenn der eigene User geändert wurde
+                if (userId == authService.currentUser?.userId) {
+                    _currentUser.value = authService.currentUser
                 }
                 setSyncMessage("Username erfolgreich geändert.", true)
-
             } else {
                 setSyncMessage("Username konnte nicht geändert werden.", false)
             }
@@ -81,65 +85,41 @@ class UserViewModel (private val sdk: TaskSDK, private val syncViewModel: SyncVi
     }
 
 
-    fun updatePassword(userId: Long, oldPassword: String, newPassword: String) {
+    fun updatePassword(userId: Long, oldPassword: String?, newPassword: String) {
         viewModelScope.launch {
-            val success = sdk.updatePassword(userId, oldPassword, newPassword)
-            if(success){
+            val success = userRepository.updatePassword(userId, oldPassword, newPassword)
+            if (success) {
                 loadAllUsers()
                 setSyncMessage("Passwort erfolgreich geändert.", true)
+            } else {
+                setSyncMessage("Passwort konnte nicht geändert werden.", false)
             }
-            else setSyncMessage("Passwort konnte nicht geändert werden.", false)
         }
     }
 
     fun deleteUser(userId: Long) {
         viewModelScope.launch {
-            val success = sdk.deleteUser(userId)
-            if(success){
+            val success = userRepository.deleteUser(userId)
+            if (success) {
                 loadAllUsers()
-                setSyncMessage("User erfolgreich gelöscht", true)
+                setSyncMessage("User erfolgreich gelöscht.", true)
+            } else {
+                setSyncMessage("User konnte nicht gelöscht werden.", false)
             }
-            else setSyncMessage("User konnte nicht gelöscht werden.", false)
         }
     }
-
-    fun manualOfflineLogin(username: String) {
-        viewModelScope.launch {
-            val offlineUser = UserSimple(
-                userId = -1L,
-                userName = username,
-                role = "OFFLINE"
-            )
-
-            userStorage.saveUser(offlineUser)
-            _currentUser.value = offlineUser
-            _isLoggedIn.value = true
-
-            setSyncMessage("Offline-Modus aktiv", true)
-        }
-    }
-
 
     fun login(username: String, password: String) {
         viewModelScope.launch {
-            val success = sdk.login(username, password)
+            val success = authService.login(username, password)
             _isLoggedIn.value = success
-
-            if (success) {
-                val user = userStorage.loadUser()
-                _currentUser.value = user
-            } else {
-                _currentUser.value = null
-            }
+            _currentUser.value = if (success) authService.currentUser else null
         }
     }
 
     fun logout() {
         viewModelScope.launch {
-            sdk.logout()
-            userStorage.clearUser()
-            tokenStorage.clearToken()
-
+            authService.logout()
             _isLoggedIn.value = false
             _currentUser.value = null
         }
@@ -148,6 +128,27 @@ class UserViewModel (private val sdk: TaskSDK, private val syncViewModel: SyncVi
     fun setSyncMessage(message: String, positive: Boolean, priority: Int = 2) {
         viewModelScope.launch {
             syncViewModel.setSyncMessage(message, positive, priority)
+        }
+    }
+
+    fun manualOfflineLogin(username: String) {
+        viewModelScope.launch {
+            // Offline-User erstellen
+            val offlineUser = UserSimple(
+                userId = -1L,       // Dummy-ID für Offline
+                userName = username,
+                role = "OFFLINE"
+            )
+
+            // User lokal speichern
+            userStorage.saveUser(offlineUser)
+
+            // LiveData / StateFlow aktualisieren
+            _currentUser.value = offlineUser
+            _isLoggedIn.value = true
+
+            // Optional Sync-Message setzen
+            setSyncMessage("Offline-Modus aktiv", true)
         }
     }
 

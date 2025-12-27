@@ -28,7 +28,6 @@ import ch.hslu.newcmpproject.viewmodel.TaskViewModel
 
 
 val statuses = listOf("To Do", "In Progress", "Done")
-val COLUMN_WIDTH_DP = 300.dp
 
 @Composable
 fun KanbanScreen(

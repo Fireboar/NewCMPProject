@@ -1,23 +1,37 @@
 package ch.hslu.newcmpproject.viewmodel
 
+import androidx.compose.runtime.LaunchedEffect
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import ch.hslu.newcmpproject.TaskSDK
+import ch.hslu.newcmpproject.cache.TaskRepository
 import ch.hslu.newcmpproject.entity.Task
 import ch.hslu.newcmpproject.entity.TokenStorage
+import ch.hslu.newcmpproject.entity.UserSimple
+import ch.hslu.newcmpproject.entity.UserStorage
+import ch.hslu.newcmpproject.network.SyncService
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 
-class TaskViewModel (private val sdk: TaskSDK, val syncViewModel: SyncViewModel) : ViewModel(){
-
-    val tokenStorage = TokenStorage()
+class TaskViewModel(
+    private val taskRepository: TaskRepository,
+    private val syncService: SyncService,
+    private val syncViewModel: SyncViewModel,
+    private val userViewModel: UserViewModel
+) : ViewModel() {
 
     private val _tasks = MutableStateFlow<List<Task>>(emptyList())
     val tasks: StateFlow<List<Task>> = _tasks
 
     init {
         loadTasks()
+        viewModelScope.launch {
+            userViewModel.currentUser.collect { user ->
+                loadTasks()
+            }
+        }
     }
 
     fun addTask(title: String, description: String?, dueDate: String, dueTime: String, status: String?) {
@@ -36,27 +50,26 @@ class TaskViewModel (private val sdk: TaskSDK, val syncViewModel: SyncViewModel)
 
     fun addTask(task: Task) {
         viewModelScope.launch {
-            val success = sdk.addTask(task, syncViewModel.isServerOnline.value)
+            val success = taskRepository.addTask(task)
             if (success) {
                 syncViewModel.setSyncMessage("'${task.title}' erfolgreich hinzugefügt und synchronisiert.", true)
             } else {
                 syncViewModel.setSyncMessage("'${task.title}' konnte nicht auf den Server hochgeladen werden.", false)
             }
             loadTasks()
-
         }
     }
 
-    private fun loadTasks() {
+    fun loadTasks() {
         viewModelScope.launch {
-            val loadedTasks = sdk.getTasks()
+            val loadedTasks = taskRepository.getLocalTasks()
             _tasks.value = loadedTasks.toList()
         }
     }
 
     fun updateTask(task: Task){
         viewModelScope.launch {
-            val success = sdk.updateTask(task,syncViewModel.isServerOnline.value)
+            val success = taskRepository.updateTask(task)
             if(success) {
                 syncViewModel.setSyncMessage("'${task.title}' erfolgreich aktualisiert.", true)
             } else {
@@ -70,7 +83,7 @@ class TaskViewModel (private val sdk: TaskSDK, val syncViewModel: SyncViewModel)
     fun moveTask(task: Task, newStatus: String) {
         viewModelScope.launch {
             val updatedTask = task.copy(status = newStatus)
-            val success = sdk.updateTask(updatedTask,syncViewModel.isServerOnline.value)
+            val success = taskRepository.updateTask(updatedTask)
             if(success) {
                 syncViewModel.setSyncMessage("'${task.title}' erfolgreich aktualisiert.", true)
             } else {
@@ -83,7 +96,7 @@ class TaskViewModel (private val sdk: TaskSDK, val syncViewModel: SyncViewModel)
 
     fun deleteTask(task: Task) {
         viewModelScope.launch {
-            val success = sdk.deleteTask(task, syncViewModel.isServerOnline.value)
+            val success = taskRepository.deleteTask(task)
             if(success){
                 syncViewModel.setSyncMessage("'${task.title}' erfolgreich gelöscht und synchronisiert.", true)
             } else {
@@ -97,7 +110,7 @@ class TaskViewModel (private val sdk: TaskSDK, val syncViewModel: SyncViewModel)
 
     fun postTasks() {
         viewModelScope.launch {
-            val success = sdk.postTasks(syncViewModel.isServerOnline.value)
+            val success = syncService.push()
             if(success){
                 syncViewModel.setSyncMessage("Tasks wurden auf den Server gepostet.", true)
             } else {
@@ -110,7 +123,7 @@ class TaskViewModel (private val sdk: TaskSDK, val syncViewModel: SyncViewModel)
 
     fun pullTasks() {
         viewModelScope.launch {
-            val success = sdk.pullTasks(syncViewModel.isServerOnline.value)
+            val success = syncService.pull()
             if(success){
                 syncViewModel.setSyncMessage("Tasks vom Server geladen und lokal synchronisiert.", true)
             } else {
@@ -123,7 +136,7 @@ class TaskViewModel (private val sdk: TaskSDK, val syncViewModel: SyncViewModel)
 
     fun mergeTasks() {
         viewModelScope.launch {
-            val success = sdk.mergeTasks(syncViewModel.isServerOnline.value)
+            val success = syncService.merge()
             if(success){
                 syncViewModel.setSyncMessage("Server- und lokale Tasks wurden zusammengeführt.", true)
             } else {
@@ -133,6 +146,5 @@ class TaskViewModel (private val sdk: TaskSDK, val syncViewModel: SyncViewModel)
 
         }
     }
-
 
 }

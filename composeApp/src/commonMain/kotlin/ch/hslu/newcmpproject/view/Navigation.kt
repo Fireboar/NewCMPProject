@@ -151,7 +151,7 @@ fun Navigation(taskViewModel: TaskViewModel, userViewModel: UserViewModel, syncV
                 )
             }
 
-            ScreenType.LOGIN -> LoginScreen(userViewModel,syncViewModel, paddingValues)
+            ScreenType.LOGIN -> LoginScreen(userViewModel, taskViewModel, syncViewModel, paddingValues)
 
         }
     }

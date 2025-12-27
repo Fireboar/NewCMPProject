@@ -33,6 +33,7 @@ import androidx.compose.foundation.layout.widthIn
 @Composable
 fun LoginScreen(
     userViewModel: UserViewModel,
+    taskViewModel: TaskViewModel,
     syncViewModel: SyncViewModel,
     paddingValues: PaddingValues
 ) {

@@ -2,21 +2,17 @@ package ch.hslu.newcmpproject.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import ch.hslu.newcmpproject.TaskSDK
 import ch.hslu.newcmpproject.model.SyncMessage
+import ch.hslu.newcmpproject.network.SyncService
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
-class SyncViewModel (private val sdk: TaskSDK) : ViewModel(){
+class SyncViewModel (private val syncService: SyncService) : ViewModel(){
 
-    init {
-        checkServerStatus()
-    }
-
-    private var _isServerOnline: MutableStateFlow<Boolean> = MutableStateFlow(false)
-    val isServerOnline: StateFlow<Boolean> = _isServerOnline
+    val isServerOnline: StateFlow<Boolean> = syncService.isServerOnline
+    val isInSync: StateFlow<Boolean> = syncService.isInSync
 
     private val _syncMessage = MutableStateFlow(
         SyncMessage("", isPositive = false, priority = 0)
@@ -24,6 +20,18 @@ class SyncViewModel (private val sdk: TaskSDK) : ViewModel(){
     val syncMessage: StateFlow<SyncMessage> = _syncMessage
 
     private var clearMessageJob: kotlinx.coroutines.Job? = null
+
+    init {
+        viewModelScope.launch {
+            while(true) {
+                syncService.checkServerStatus()
+                if (!isInSync.value) {
+                    setSyncMessage("Server nicht synchron oder hat keine Tasks", false, priority = 2)
+                }
+                delay(8000)
+            }
+        }
+    }
 
     fun setSyncMessage(message: String, positive: Boolean, priority: Int = 2) {
         viewModelScope.launch {
@@ -40,31 +48,6 @@ class SyncViewModel (private val sdk: TaskSDK) : ViewModel(){
                 clearMessageJob = viewModelScope.launch {
                     delay(8000)
                     _syncMessage.value = SyncMessage("", true, priority = 0)
-                }
-            }
-        }
-    }
-
-
-    fun checkServerStatus(){
-        viewModelScope.launch {
-            while (true) {
-                val online = sdk.isServerOnline()
-                _isServerOnline.value = online
-                if (online) {
-                    isInSync()
-                }
-                delay(8000)
-            }
-        }
-    }
-
-    fun isInSync(){
-        viewModelScope.launch {
-            if(isServerOnline.value){
-                val inSync = sdk.isInSync()
-                if (!inSync) {
-                    setSyncMessage("Server nicht synchron oder hat keine Tasks", false, 1)
                 }
             }
         }

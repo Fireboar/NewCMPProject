@@ -82,6 +82,7 @@ fun DraggableTaskItem(
         }),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
+        //Inhalt (Tasktitle, dueDate ...)
         Row(
             modifier = Modifier
                 .fillMaxWidth()

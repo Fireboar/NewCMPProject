@@ -39,7 +39,9 @@ fun DeleteTaskButton(onDelete: () -> Unit) {
                         onDelete()       // löschen ausführen
                         showDialog = false
                     },
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF44336), contentColor = Color.White)
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFFF44336),
+                        contentColor = Color.White)
                 ) {
                     Text("Ja")
                 }
@@ -47,7 +49,9 @@ fun DeleteTaskButton(onDelete: () -> Unit) {
             dismissButton = {
                 Button(
                     onClick = { showDialog = false },
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50), contentColor = Color.White)
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF4CAF50),
+                        contentColor = Color.White)
                 ) {
                     Text("Nein")
                 }

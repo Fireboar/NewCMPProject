@@ -19,19 +19,17 @@ import ch.hslu.newcmpproject.viewmodel.UserViewModel
 fun DeleteUserButton(onDelete: () -> Unit) {
     var showDialog by remember { mutableStateOf(false) }
 
-    // Der eigentliche Button
     Button(
         onClick = { showDialog = true },
         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF44336))
     ) {
         Icon(
             imageVector = Icons.Default.Delete,
-            contentDescription = "Delete User",
+            contentDescription = "Delete",
             tint = Color.White
         )
     }
 
-    // Bestätigungsdialog
     if (showDialog) {
         AlertDialog(
             onDismissRequest = { showDialog = false },

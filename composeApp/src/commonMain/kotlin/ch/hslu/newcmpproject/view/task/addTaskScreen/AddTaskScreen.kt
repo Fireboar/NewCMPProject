@@ -22,7 +22,7 @@ fun AddTaskScreen(taskViewModel: TaskViewModel, paddingValues: PaddingValues) {
     ) {
         Column(
             modifier = Modifier
-                .widthIn(max = 480.dp) // 👈 mittlere Spalte
+                .widthIn(max = 480.dp)
         ) {
             TaskForm(
                 paddingValues,
