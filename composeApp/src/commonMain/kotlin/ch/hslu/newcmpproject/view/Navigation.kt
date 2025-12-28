@@ -47,7 +47,7 @@ fun Navigation(taskViewModel: TaskViewModel, userViewModel: UserViewModel, syncV
 
     var currentTaskId by rememberSaveable { mutableStateOf<Long?>(null) }
 
-    var currentUserId by rememberSaveable {mutableStateOf<Long?>(null)}
+    var currentUserId by rememberSaveable { mutableStateOf<Long?>(null) }
 
     val currentUser = userViewModel.currentUser.value
     val isAdmin = currentUser?.role == "ADMIN"
@@ -69,8 +69,6 @@ fun Navigation(taskViewModel: TaskViewModel, userViewModel: UserViewModel, syncV
         }
         wasLoggedIn = isLoggedIn
     }
-
-
 
     Scaffold(
         topBar = {
@@ -151,7 +149,7 @@ fun Navigation(taskViewModel: TaskViewModel, userViewModel: UserViewModel, syncV
                 )
             }
 
-            ScreenType.LOGIN -> LoginScreen(userViewModel, taskViewModel, syncViewModel, paddingValues)
+            ScreenType.LOGIN -> LoginScreen(userViewModel, syncViewModel, paddingValues)
 
         }
     }

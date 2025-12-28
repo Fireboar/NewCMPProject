@@ -16,5 +16,3 @@ data class User(
     @SerialName("role")
     val role: String
 )
-
-

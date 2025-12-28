@@ -1,7 +1,8 @@
-package ch.hslu.newcmpproject.network
+package ch.hslu.newcmpproject.network.api
 
 import ch.hslu.newcmpproject.entity.Task
 import ch.hslu.newcmpproject.entity.Token
+import ch.hslu.newcmpproject.network.SERVER_IP
 import io.ktor.client.call.body
 import io.ktor.client.request.delete
 import io.ktor.client.request.get
@@ -17,7 +18,7 @@ class TaskApi() {
 
     suspend fun getTasks(token: Token): List<Task> {
         return try {
-            ApiClient.client.get("$SERVER_IP/tasks") {
+            ApiClient.client.get("${SERVER_IP}/tasks") {
                 header("Authorization", "Bearer ${token.value}")
             }.body<List<Task>>()  // Typ explizit angeben
         } catch (e: Throwable) {
@@ -30,7 +31,7 @@ class TaskApi() {
 
     suspend fun addTask(token:Token, task: Task):Boolean {
         return try {
-            val response = ApiClient.client.post("$SERVER_IP/tasks") {
+            val response = ApiClient.client.post("${SERVER_IP}/tasks") {
                 header("Authorization", "Bearer ${token.value}")
                 contentType(ContentType.Application.Json)
                 setBody(task)
@@ -46,7 +47,7 @@ class TaskApi() {
 
     suspend fun updateTask(token:Token, task: Task) :Boolean {
         return try {
-            val response = ApiClient.client.put("$SERVER_IP/tasks/${task.id}") {
+            val response = ApiClient.client.put("${SERVER_IP}/tasks/${task.id}") {
                 header("Authorization", "Bearer ${token.value}")
                 contentType(ContentType.Application.Json)
                 setBody(task)
@@ -62,7 +63,7 @@ class TaskApi() {
 
     suspend fun deleteTask(token:Token, id: Long): Boolean {
         return try {
-            val response = ApiClient.client.delete("$SERVER_IP/tasks/$id"){
+            val response = ApiClient.client.delete("${SERVER_IP}/tasks/$id"){
                 header("Authorization", "Bearer ${token.value}")
             }
             response.status == HttpStatusCode.OK
@@ -76,7 +77,7 @@ class TaskApi() {
 
     suspend fun replaceTasks(token:Token, tasks: List<Task>): Boolean {
         return try {
-            val response = ApiClient.client.post("$SERVER_IP/tasks/replace") {
+            val response = ApiClient.client.post("${SERVER_IP}/tasks/replace") {
                 header("Authorization", "Bearer ${token.value}")
                 contentType(ContentType.Application.Json)
                 setBody(tasks)

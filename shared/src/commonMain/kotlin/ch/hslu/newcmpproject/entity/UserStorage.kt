@@ -3,12 +3,12 @@ package ch.hslu.newcmpproject.entity
 import com.russhwolf.settings.Settings
 import kotlinx.serialization.json.Json
 class UserStorage {
-
     private val settings = Settings()
     private val json = Json { ignoreUnknownKeys = true }
 
     fun saveUser(user: UserSimple) {
-        settings.putString("user", json.encodeToString(UserSimple.serializer(), user))
+        settings.putString("user", json.encodeToString(
+            UserSimple.serializer(), user))
     }
 
     fun loadUser(): UserSimple? {

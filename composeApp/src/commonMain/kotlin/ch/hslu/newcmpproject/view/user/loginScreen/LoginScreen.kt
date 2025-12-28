@@ -33,7 +33,6 @@ import androidx.compose.foundation.layout.widthIn
 @Composable
 fun LoginScreen(
     userViewModel: UserViewModel,
-    taskViewModel: TaskViewModel,
     syncViewModel: SyncViewModel,
     paddingValues: PaddingValues
 ) {
@@ -55,7 +54,6 @@ fun LoginScreen(
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-
             OutlinedTextField(
                 value = username,
                 onValueChange = { username = it },
@@ -74,6 +72,8 @@ fun LoginScreen(
                 visualTransformation = PasswordVisualTransformation(),
                 modifier = Modifier.fillMaxWidth()
             )
+
+
 
             Spacer(modifier = Modifier.height(16.dp))
 
@@ -102,6 +102,8 @@ fun LoginScreen(
             ) {
                 Text(if (isLoading) "Logging in..." else "Login")
             }
+
+            // Folgender Code
 
             if (!syncViewModel.isServerOnline.value) {
                 Spacer(modifier = Modifier.height(8.dp))

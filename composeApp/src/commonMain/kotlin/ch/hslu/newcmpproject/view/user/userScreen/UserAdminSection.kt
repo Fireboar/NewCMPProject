@@ -39,9 +39,10 @@ fun UserAdminSection(
     onUserClick: (userId: Long) -> Unit,
     onAddUserClick: () -> Unit,
 ) {
+    val users by userViewModel.allUsers.collectAsState()
 
     LaunchedEffect(Unit) {
-        userViewModel.loadAllUsers() // sorgt dafür, dass Compose die Liste sofort aktualisiert
+        userViewModel.loadAllUsers()
     }
 
     Column(
@@ -81,8 +82,6 @@ fun UserAdminSection(
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        val users by userViewModel.allUsers.collectAsState()
-
         Text("User Liste:", style = MaterialTheme.typography.titleMedium)
         Column {
             users.forEach { user ->
@@ -117,5 +116,7 @@ fun UserAdminSection(
                 }
             }
         }
+
+
     }
 }

@@ -30,10 +30,10 @@ class UserViewModel(
     private val _allUsers = MutableStateFlow<List<UserSimple>>(emptyList())
     val allUsers: StateFlow<List<UserSimple>> = _allUsers
 
-    private val _selectedUser= MutableStateFlow(
-        userStorage.loadUser()
-    )
+    private val _selectedUser= MutableStateFlow(userStorage.loadUser())
     val selectedUser: StateFlow<UserSimple?> = _selectedUser
+
+    // Folgender Code
 
 
     init {
@@ -52,17 +52,25 @@ class UserViewModel(
         }
     }
 
+    // Folgender Code
+
     fun addUser(username: String, password: String, role: String) {
         viewModelScope.launch {
             val success = userRepository.addUser(username, password, role)
             if (success) {
                 loadAllUsers()
-                setSyncMessage("User $username erfolgreich hinzugefügt.", true)
+                setSyncMessage(
+                    "User $username erfolgreich hinzugefügt.",
+                    true)
             } else {
-                setSyncMessage("User konnte nicht erstellt werden.", false)
+                setSyncMessage(
+                    "User konnte nicht erstellt werden.",
+                    false)
             }
         }
     }
+
+    // Folgender Code
 
     fun updateUsername(userId: Long, newUsername: String) {
         viewModelScope.launch {
@@ -77,12 +85,18 @@ class UserViewModel(
                 if (userId == authService.currentUser?.userId) {
                     _currentUser.value = authService.currentUser
                 }
-                setSyncMessage("Username erfolgreich geändert.", true)
+                setSyncMessage(
+                    "Username erfolgreich geändert.",
+                    true)
             } else {
-                setSyncMessage("Username konnte nicht geändert werden.", false)
+                setSyncMessage(
+                    "Username konnte nicht geändert werden.",
+                    false)
             }
         }
     }
+
+    // Folgender Code
 
 
     fun updatePassword(userId: Long, oldPassword: String?, newPassword: String) {
@@ -97,6 +111,8 @@ class UserViewModel(
         }
     }
 
+    // Folgender Code
+
     fun deleteUser(userId: Long) {
         viewModelScope.launch {
             val success = userRepository.deleteUser(userId)
@@ -108,6 +124,8 @@ class UserViewModel(
             }
         }
     }
+
+    // Folgender Code
 
     fun login(username: String, password: String) {
         viewModelScope.launch {
@@ -124,6 +142,8 @@ class UserViewModel(
             _currentUser.value = null
         }
     }
+
+    // Folgender Code
 
     fun setSyncMessage(message: String, positive: Boolean, priority: Int = 2) {
         viewModelScope.launch {

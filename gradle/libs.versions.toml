@@ -52,8 +52,12 @@ native-driver = { module = "app.cash.sqldelight:native-driver", version.ref = "s
 jdbc-driver = { module = "app.cash.sqldelight:jdbc-driver", version.ref = "sqlDelight" }
 web-worker-driver = { module = "app.cash.sqldelight:web-worker-driver", version.ref = "sqlDelight" }
 
-#Security
+# Settings
 multiplatform-settings = { module = "com.russhwolf:multiplatform-settings-no-arg", version.ref = "multiplatformSettings" }
+
+# Auth
+ktor-server-auth = { module = "io.ktor:ktor-server-auth", version.ref = "ktor" }
+ktor-server-auth-jwt = { module = "io.ktor:ktor-server-auth-jwt", version.ref = "ktor" }
 
 #API
 kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinx-coroutines" }

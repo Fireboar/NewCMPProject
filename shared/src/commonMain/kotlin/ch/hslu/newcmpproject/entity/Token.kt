@@ -6,10 +6,10 @@ import kotlinx.serialization.json.JsonIgnoreUnknownKeys
 @Serializable
 data class Token(val value: String)
 
-
 fun decodeBase64Url(input: String): ByteArray {
     // Base64 URL safe: '-' -> '+', '_' -> '/'
-    val fixed = input.replace('-', '+').replace('_', '/')
+    val fixed = input.replace('-', '+')
+        .replace('_', '/')
         .padEnd((input.length + 3) / 4 * 4, '=')
 
     val base64Chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
@@ -33,9 +33,8 @@ fun decodeBase64Url(input: String): ByteArray {
     return output.toByteArray()
 }
 
-// Plattformübergreifende Konvertierung ByteArray -> String
 fun ByteArray.toUtf8String(): String {
-    return this.decodeToString()  // decodeToString() existiert in Kotlin stdlib KMP
+    return this.decodeToString()
 }
 
 fun decodeBase64UrlToString(input: String): String {

@@ -1,6 +1,8 @@
 package ch.hslu.newcmpproject.network
 
-import ch.hslu.newcmpproject.cache.Database
+import ch.hslu.newcmpproject.data.database.TaskDao
+import ch.hslu.newcmpproject.network.api.ApiClient
+import ch.hslu.newcmpproject.network.api.TaskApi
 import ch.hslu.newcmpproject.network.auth.AuthService
 import io.ktor.client.request.get
 import io.ktor.http.HttpStatusCode
@@ -9,7 +11,7 @@ import kotlinx.coroutines.flow.StateFlow
 
 class SyncService(
     private val taskApi: TaskApi,
-    private val database: Database,
+    private val taskDao: TaskDao,
     private val authService: AuthService
 ) {
 
@@ -39,7 +41,7 @@ class SyncService(
         val token = authService.token ?: return
         val userId = authService.currentUser?.userId ?: return
         val serverTasks = taskApi.getTasks(token)
-        val localTasks = database.getTasks(userId)
+        val localTasks = taskDao.getAll(userId)
         _isInSync.value = localTasks == serverTasks
     }
 
@@ -54,11 +56,9 @@ class SyncService(
         val serverTasks = taskApi.getTasks(token)
         if (serverTasks.isEmpty()) return false
 
-        database.replaceTasks(userId, serverTasks)
+        taskDao.replaceAll(userId, serverTasks)
         return true
     }
-
-    // Folgender Code
 
     suspend fun push(): Boolean {
         val token = authService.token ?: return false
@@ -66,7 +66,7 @@ class SyncService(
 
         if (!isServerOnline.value) return false
 
-        return taskApi.replaceTasks(token, database.getTasks(userId))
+        return taskApi.replaceTasks(token, taskDao.getAll(userId))
     }
 
     // Folgender Code
@@ -78,14 +78,14 @@ class SyncService(
         if (!isServerOnline.value) return false
 
         val serverTasks = taskApi.getTasks(token)
-        val localTasks = database.getTasks(userId)
+        val localTasks = taskDao.getAll(userId)
 
         if (serverTasks.isEmpty() && localTasks.isEmpty()) return true
 
         val mergedTasks = (localTasks + serverTasks)
             .distinctBy { it.id }
 
-        database.replaceTasks(userId, mergedTasks)
+        taskDao.replaceAll(userId, mergedTasks)
 
         return taskApi.replaceTasks(token, mergedTasks)
     }

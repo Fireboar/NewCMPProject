@@ -38,60 +38,17 @@ fun UserDetailScreen(
 ) {
     val isLoggedIn by userViewModel.isLoggedIn.collectAsState()
     val user by userViewModel.selectedUser.collectAsState()
+    val isOwnUser = user?.userId == userViewModel.currentUser.collectAsState().value?.userId
 
     var username by remember { mutableStateOf("") }
     var oldPassword by remember { mutableStateOf("") }
     var newPassword by remember { mutableStateOf("") }
-    val isOwnUser = user?.userId == userViewModel.currentUser.collectAsState().value?.userId
-
-// --- Password ---
-    if (isOwnUser) {
-        Text("Password", style = MaterialTheme.typography.titleMedium)
-        Spacer(Modifier.height(8.dp))
-        TextField(
-            value = oldPassword,
-            onValueChange = { oldPassword = it },
-            label = { Text("Old Password") },
-            visualTransformation = PasswordVisualTransformation(),
-            modifier = Modifier.fillMaxWidth()
-        )
-        Spacer(Modifier.height(8.dp))
-        TextField(
-            value = newPassword,
-            onValueChange = { newPassword = it },
-            label = { Text("New Password") },
-            visualTransformation = PasswordVisualTransformation(),
-            modifier = Modifier.fillMaxWidth()
-        )
-        Spacer(Modifier.height(8.dp))
-        Button(
-            enabled = oldPassword.isNotBlank() && newPassword.length >= 8,
-            onClick = {
-                userViewModel.updatePassword(
-                    userId = user!!.userId,
-                    oldPassword = oldPassword,
-                    newPassword = newPassword
-                )
-                oldPassword = ""
-                newPassword = ""
-            },
-            modifier = Modifier.fillMaxWidth(),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = Color(0xFF4CAF50),
-                contentColor = Color.White
-            )
-        ) {
-            Text("Speichern")
-        }
-    }
 
 
-    // 🔑 User laden (einmal pro ID)
     LaunchedEffect(selectedUserId) {
         userViewModel.loadUser(selectedUserId)
     }
 
-    // 🔑 UI-State synchronisieren
     LaunchedEffect(user?.userId) {
         username = user?.userName ?: ""
     }
@@ -110,16 +67,19 @@ fun UserDetailScreen(
                     .padding(16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-
                 // --- Username ---
                 Text("Username", style = MaterialTheme.typography.titleMedium)
+
                 Spacer(Modifier.height(8.dp))
+
                 TextField(
                     value = username,
                     onValueChange = { username = it },
                     modifier = Modifier.fillMaxWidth()
                 )
+
                 Spacer(Modifier.height(8.dp))
+
                 Button(
                     enabled = username.isNotBlank() && username != user!!.userName,
                     onClick = { userViewModel.updateUsername(
@@ -128,8 +88,8 @@ fun UserDetailScreen(
                     ) },
                     modifier = Modifier.fillMaxWidth(),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF4CAF50), // grüner Hintergrund
-                        contentColor = Color.White           // weiße Schrift
+                        containerColor = Color(0xFF4CAF50),
+                        contentColor = Color.White
                     )
                 ) {
                     Text("Speichern")
@@ -137,11 +97,8 @@ fun UserDetailScreen(
 
                 Spacer(Modifier.height(24.dp))
 
-                val isOwnUser = user?.userId == userViewModel.currentUser.collectAsState().value?.userId
-
-                // --- Old Password (nur eigener User) ---
+                // --- Old Password  ---
                 if (isOwnUser) {
-                    Spacer(Modifier.height(8.dp))
                     TextField(
                         value = oldPassword,
                         onValueChange = { oldPassword = it },
@@ -151,9 +108,9 @@ fun UserDetailScreen(
                     )
                 }
 
-                // --- New Password (immer sichtbar) ---
-                Text("New Password", style = MaterialTheme.typography.titleMedium)
                 Spacer(Modifier.height(8.dp))
+
+                // --- New Password  ---
                 TextField(
                     value = newPassword,
                     onValueChange = { newPassword = it },
@@ -164,6 +121,7 @@ fun UserDetailScreen(
 
                 // --- Button ---
                 Spacer(Modifier.height(8.dp))
+
                 Button(
                     enabled = newPassword.length >= 8 && (isOwnUser.not() || oldPassword.isNotBlank()),
                     onClick = {
@@ -183,6 +141,8 @@ fun UserDetailScreen(
                 ) {
                     Text("Speichern")
                 }
+
+                // Folgender Code
 
             }
         } else {

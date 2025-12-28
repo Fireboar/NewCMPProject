@@ -2,16 +2,16 @@ package ch.hslu.newcmpproject
 
 import app.cash.sqldelight.driver.jdbc.sqlite.JdbcSqliteDriver
 import ch.hslu.cmpproject.cache.AppDatabase
-import ch.hslu.newcmpproject.cache.Database
+import ch.hslu.newcmpproject.data.database.DatabaseProvider
+import ch.hslu.newcmpproject.data.database.TaskDao
+import ch.hslu.newcmpproject.cache.database.UserDao
 import ch.hslu.newcmpproject.entity.CreateUserRequest
 import ch.hslu.newcmpproject.entity.LoginRequest
 import ch.hslu.newcmpproject.entity.Task
 import ch.hslu.newcmpproject.entity.UpdatePasswordRequest
 import ch.hslu.newcmpproject.entity.UpdateUsernameRequest
 import ch.hslu.newcmpproject.entity.UserSimple
-import ch.hslu.newcmpproject.security.generateSalt
-import ch.hslu.newcmpproject.security.hashPasswordWithSalt
-import ch.hslu.newcmpproject.security.verifyPassword
+import ch.hslu.newcmpproject.security.PasswordService
 import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
 import io.ktor.http.HttpHeaders
@@ -109,30 +109,24 @@ suspend fun Application.module() {
     // SQLDelight initialisieren
     val driver = JdbcSqliteDriver("jdbc:sqlite:server.db")
     AppDatabase.Schema.create(driver).await()
-    val database = Database(driver)
 
-    // Folgender Code
+    // DB
+    val databaseProvider = DatabaseProvider(driver)
+
+    // DAOs
+    val userDao = UserDao(databaseProvider.queries)
+    val taskDao = TaskDao(databaseProvider.queries)
+
+    // Services
+    val passwordService = PasswordService()
 
 
-    // Prüfen, ob schon ein User existiert
-    val existingUser = database.getUserByUsername("admin")
-    val thisId = existingUser?.id ?: database.insertUser(
-        username = "admin", password = "123",
+    val existingUser = userDao.getByUsername("admin")
+    val adminId = existingUser?.id ?: userDao.insert(
+        username = "admin",
+        password = "123",
         role = "ADMIN"
     )
-
-    // Prüfen, ob Tasks für diesen User existieren
-    if (database.getTasks(thisId).isEmpty()) {
-        val defaultTask = Task(
-            userId = thisId,
-            title = "Server-Task",
-            description = "Dies ist ein Default-Task",
-            dueDate = "12.12.2025",
-            dueTime = "12:00",
-            status = "To Do"
-        )
-        database.insertTask(defaultTask)
-    }
 
     // Folgender Code
 
@@ -144,9 +138,9 @@ suspend fun Application.module() {
     routing {
         post("/login") {
             val loginRequest = call.receive<LoginRequest>()
-            val user = database.getUserByUsername(loginRequest.username)
+            val user = userDao.getByUsername(loginRequest.username)
 
-            if (user == null || !verifyPassword(loginRequest.password, user)) {
+            if (user == null || !passwordService.verifyPassword(loginRequest.password, user)) {
                 call.respond(HttpStatusCode.Unauthorized, "Invalid credentials")
                 return@post
             }
@@ -175,7 +169,7 @@ suspend fun Application.module() {
                     return@get call.respond(HttpStatusCode.Forbidden, "Admin only")
                 }
 
-                val users = database.getAllUsers()  // Eine Funktion, die alle User zurückgibt
+                val users = userDao.getAll()  // Eine Funktion, die alle User zurückgibt
                 call.respond(users.map { user ->
                     // Nur die notwendigen Daten zurückgeben, z.B. ID + Username + Role
                     UserSimple(
@@ -210,7 +204,7 @@ suspend fun Application.module() {
                 }
 
                 // User aus DB holen
-                val user = database.getUserById(userId)
+                val user = userDao.getById(userId)
                     ?: return@get call.respond(
                         HttpStatusCode.NotFound,
                         "User not found")
@@ -241,20 +235,20 @@ suspend fun Application.module() {
 
                 val userrequest = call.receive<CreateUserRequest>()
 
-                val existing = database.getUserByUsername(userrequest.username)
+                val existing = userDao.getByUsername(userrequest.username)
                 if (existing != null) {
                     return@post call.respond(
                         HttpStatusCode.Conflict,
                         "User already exists")
                 }
 
-                val userId = database.insertUser(
+                val userId = userDao.insert(
                     userrequest.username,
                     userrequest.password,
                     userrequest.role
                 )
 
-                val user = database.getUserById(userId)!!
+                val user = userDao.getById(userId)!!
 
                 val userResponse = UserSimple(
                     userId = user.id,
@@ -287,7 +281,7 @@ suspend fun Application.module() {
                 }
 
                 // Prüfen, ob Username bereits existiert
-                val existingUser = database.getUserByUsername(request.username)
+                val existingUser = userDao.getByUsername(request.username)
                 if (existingUser != null && existingUser.id != targetUserId) {
                     return@put call.respond(
                         HttpStatusCode.Conflict,
@@ -295,9 +289,9 @@ suspend fun Application.module() {
                 }
 
                 // Update durchführen
-                database.updateUsername(targetUserId, request.username)
+                userDao.updateUsername(targetUserId, request.username)
 
-                val targetUser = database.getUserById(targetUserId)!!
+                val targetUser = userDao.getById(targetUserId)!!
 
                 // Neues JWT nur für eigenen User
                 if (targetUserId == requesterId) {
@@ -335,7 +329,7 @@ suspend fun Application.module() {
                         "Only admins can change other users' passwords")
                 }
 
-                val user = database.getUserById(targetUserId)
+                val user = userDao.getById(targetUserId)
                     ?: return@put call.respond(
                         HttpStatusCode.NotFound,
                         "User not found")
@@ -347,7 +341,7 @@ suspend fun Application.module() {
                             "Old password required"
                         )
 
-                    if (!verifyPassword(oldPassword, user)) {
+                    if (!passwordService.verifyPassword(oldPassword, user)) {
                         return@put call.respond(
                             HttpStatusCode.Unauthorized,
                             "Wrong password"
@@ -355,12 +349,10 @@ suspend fun Application.module() {
                     }
                 }
 
-                val newSalt = generateSalt()
-                val newPasswordHash = hashPasswordWithSalt(request.newPassword, newSalt)
-                database.updatePassword(
-                    targetUserId,
-                    newPasswordHash,
-                    newSalt.joinToString("") { "%02x".format(it) })
+                userDao.updatePassword(
+                    id = targetUserId,
+                    newPassword = request.newPassword
+                )
 
                 call.respond(
                     HttpStatusCode.OK,
@@ -383,7 +375,7 @@ suspend fun Application.module() {
                 val userId = call.parameters["id"]?.toLongOrNull()
                     ?: return@delete call.respond(HttpStatusCode.BadRequest)
 
-                database.deleteUser(userId)
+                userDao.delete(userId)
 
                 call.respond(HttpStatusCode.OK)
             }
@@ -404,7 +396,7 @@ suspend fun Application.module() {
                 // 🔐 userId erzwingen
                 val task = taskFromClient.copy(userId = userId)
 
-                val insertedTask = database.upsertTask(task)
+                val insertedTask = taskDao.upsert(task)
                 call.respond(HttpStatusCode.OK, insertedTask)
             }
 
@@ -415,7 +407,7 @@ suspend fun Application.module() {
                 val principal = call.principal<JWTPrincipal>()
                 val userId = principal!!.payload.getClaim("userId").asLong()
 
-                val tasks = database.getTasks(userId = userId)
+                val tasks = taskDao.getAll(userId = userId)
                 call.respond(tasks)
             }
 
@@ -441,7 +433,7 @@ suspend fun Application.module() {
                 val updatedTaskData = call.receive<Task>()
 
                 // Existenz prüfen
-                val existingTask = database.getTaskById(userId, taskId)
+                val existingTask = taskDao.getById(userId, taskId)
                 if (existingTask == null) {
                     return@put call.respond(
                         HttpStatusCode.NotFound,
@@ -455,7 +447,7 @@ suspend fun Application.module() {
                 )
 
                 // Update in DB
-                database.updateTask(taskToUpdate)
+                taskDao.update(taskToUpdate)
 
                 call.respond(HttpStatusCode.OK, taskToUpdate)
             }
@@ -478,7 +470,7 @@ suspend fun Application.module() {
                         "Invalid task ID")
 
                 // Existenz prüfen
-                val existingTask = database.getTaskById(userId, taskId)
+                val existingTask = taskDao.getById(userId, taskId)
                 if (existingTask == null) {
                     return@delete call.respond(
                         HttpStatusCode.NotFound,
@@ -486,7 +478,10 @@ suspend fun Application.module() {
                 }
 
                 // Task löschen
-                database.deleteTask(existingTask)
+                taskDao.delete(
+                    taskId = existingTask.id,
+                    userId = userId
+                )
 
                 call.respond(
                     HttpStatusCode.OK,
@@ -512,7 +507,7 @@ suspend fun Application.module() {
                 val safeTasks = tasksFromClient.map { it.copy(userId = userId) }
 
                 // Alle Tasks für diesen User ersetzen
-                database.replaceTasks(userId, safeTasks)
+                taskDao.replaceAll(userId, safeTasks)
 
                 call.respond(
                     HttpStatusCode.OK,

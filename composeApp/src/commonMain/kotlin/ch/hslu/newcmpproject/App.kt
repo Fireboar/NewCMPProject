@@ -3,17 +3,17 @@ package ch.hslu.newcmpproject
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.*
 import ch.hslu.cmpproject.cache.AppDatabase
-import ch.hslu.newcmpproject.cache.Database
 import ch.hslu.newcmpproject.cache.TaskRepository
 import ch.hslu.newcmpproject.cache.UserRepository
 import ch.hslu.newcmpproject.cache.provideDbDriver
+import ch.hslu.newcmpproject.data.database.TaskDao
 import ch.hslu.newcmpproject.entity.TokenStorage
 import ch.hslu.newcmpproject.entity.UserStorage
+import ch.hslu.newcmpproject.network.SyncService
+import ch.hslu.newcmpproject.network.api.TaskApi
+import ch.hslu.newcmpproject.network.api.UserApi
 import ch.hslu.newcmpproject.network.auth.AuthApi
 import ch.hslu.newcmpproject.network.auth.AuthService
-import ch.hslu.newcmpproject.network.SyncService
-import ch.hslu.newcmpproject.network.TaskApi
-import ch.hslu.newcmpproject.network.UserApi
 import ch.hslu.newcmpproject.view.Navigation
 import ch.hslu.newcmpproject.viewmodel.SyncViewModel
 import ch.hslu.newcmpproject.viewmodel.TaskViewModel
@@ -28,7 +28,12 @@ fun App() {
 
     LaunchedEffect(Unit) {
         val driver = provideDbDriver(AppDatabase.Schema)
-        val database = Database(driver)
+        val database = AppDatabase(driver)
+
+        val taskDao = TaskDao(
+            queries = database.appDatabaseQueries
+        )
+
         val taskApi = TaskApi()
         val userApi = UserApi()
 
@@ -45,11 +50,11 @@ fun App() {
         )
 
         // SyncService
-        val syncService = SyncService(taskApi, database, authService)
+        val syncService = SyncService(taskApi, taskDao, authService)
 
         // TaskRepository
         val taskRepository = TaskRepository(
-            database, taskApi, authService,
+            taskDao, taskApi, authService,
             syncService = syncService
         )
         val userRepository = UserRepository(

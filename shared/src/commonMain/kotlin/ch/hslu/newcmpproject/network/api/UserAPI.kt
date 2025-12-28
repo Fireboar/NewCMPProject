@@ -1,4 +1,4 @@
-package ch.hslu.newcmpproject.network
+package ch.hslu.newcmpproject.network.api
 
 import ch.hslu.newcmpproject.entity.CreateUserRequest
 import ch.hslu.newcmpproject.entity.LoginRequest
@@ -6,6 +6,7 @@ import ch.hslu.newcmpproject.entity.Token
 import ch.hslu.newcmpproject.entity.UpdatePasswordRequest
 import ch.hslu.newcmpproject.entity.UpdateUsernameRequest
 import ch.hslu.newcmpproject.entity.UserSimple
+import ch.hslu.newcmpproject.network.SERVER_IP
 import io.ktor.client.call.body
 import io.ktor.client.request.delete
 import io.ktor.client.request.get
@@ -27,7 +28,7 @@ class UserApi {
         password: String,
         role: String = "USER"
     ): Boolean = try {
-        val response = ApiClient.client.post("$SERVER_IP/users") {
+        val response = ApiClient.client.post("${SERVER_IP}/users") {
             header("Authorization", "Bearer ${token.value}")
             contentType(ContentType.Application.Json)
             setBody(CreateUserRequest(username, password, role))
@@ -42,7 +43,7 @@ class UserApi {
     // GET ALL USERS
     suspend fun getAllUsers(token: Token): List<UserSimple> {
         return try {
-            ApiClient.client.get("$SERVER_IP/users") {
+            ApiClient.client.get("${SERVER_IP}/users") {
                 header("Authorization", "Bearer ${token.value}")
             }.body<List<UserSimple>>()
         } catch (e: Throwable) {
@@ -58,7 +59,7 @@ class UserApi {
         userId: Long
     ): UserSimple? {
         return try {
-            ApiClient.client.get("$SERVER_IP/users/$userId") {
+            ApiClient.client.get("${SERVER_IP}/users/$userId") {
                 header("Authorization", "Bearer ${token.value}")
             }.body<UserSimple>()
         } catch (e: Exception) {
@@ -80,7 +81,7 @@ class UserApi {
         newUsername: String
     ): UpdateUsernameResult
     {
-        val response = ApiClient.client.put("$SERVER_IP/user/username") {
+        val response = ApiClient.client.put("${SERVER_IP}/user/username") {
             header("Authorization", "Bearer ${token.value}")
             contentType(ContentType.Application.Json)
             setBody(UpdateUsernameRequest(
@@ -102,7 +103,7 @@ class UserApi {
         oldPassword: String?,
         newPassword: String
     ): Boolean {
-        val response = ApiClient.client.put("$SERVER_IP/user/password") {
+        val response = ApiClient.client.put("${SERVER_IP}/user/password") {
             header("Authorization", "Bearer ${token.value}")
             contentType(ContentType.Application.Json)
             setBody(UpdatePasswordRequest(
@@ -118,7 +119,7 @@ class UserApi {
     // DELETE USER
     suspend fun deleteUser(token: Token, userId: Long): Boolean {
         return try {
-            val response = ApiClient.client.delete("$SERVER_IP/users/$userId") {
+            val response = ApiClient.client.delete("${SERVER_IP}/users/$userId") {
                 header("Authorization", "Bearer ${token.value}")
             }
             response.status == HttpStatusCode.OK
@@ -136,7 +137,7 @@ class UserApi {
         password: String
     ): Token {
         return try {
-            val response = ApiClient.client.post("$SERVER_IP/login") {
+            val response = ApiClient.client.post("${SERVER_IP}/login") {
                 contentType(ContentType.Application.Json)
                 setBody(LoginRequest(username, password))
             }

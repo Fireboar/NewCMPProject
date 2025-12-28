@@ -7,7 +7,6 @@ CREATE TABLE IF NOT EXISTS Users (
     role TEXT NOT NULL DEFAULT 'USER'
 );
 
-
 insertUser:
 INSERT INTO Users(username, passwordHash, salt, role)
 VALUES (?, ?, ?, ?);

@@ -34,7 +34,7 @@ dependencies {
     implementation(libs.ktor.server.cors)
 
     // Security
-    implementation("io.ktor:ktor-server-auth:2.3.4")
-    implementation("io.ktor:ktor-server-auth-jwt:2.3.4")
+    implementation(libs.ktor.server.auth)
+    implementation(libs.ktor.server.auth.jwt)
 
 }
