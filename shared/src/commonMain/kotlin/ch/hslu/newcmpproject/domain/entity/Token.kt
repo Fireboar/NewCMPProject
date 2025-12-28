@@ -1,7 +1,6 @@
-package ch.hslu.newcmpproject.entity
-import kotlinx.serialization.SerialName
+package ch.hslu.newcmpproject.domain.entity
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.JsonIgnoreUnknownKeys
+import kotlin.text.iterator
 
 @Serializable
 data class Token(val value: String)

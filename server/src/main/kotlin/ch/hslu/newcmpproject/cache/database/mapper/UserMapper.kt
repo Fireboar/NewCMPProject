@@ -1,6 +1,6 @@
 package ch.hslu.newcmpproject.cache.database.mapper
 
-import ch.hslu.newcmpproject.entity.User
+import ch.hslu.newcmpproject.domain.entity.User
 
 object UserMapper {
     fun map(

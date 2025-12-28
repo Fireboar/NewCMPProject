@@ -1,11 +1,11 @@
-package ch.hslu.newcmpproject.network.api
+package ch.hslu.newcmpproject.data.remote.api
 
-import ch.hslu.newcmpproject.entity.CreateUserRequest
-import ch.hslu.newcmpproject.entity.LoginRequest
-import ch.hslu.newcmpproject.entity.Token
-import ch.hslu.newcmpproject.entity.UpdatePasswordRequest
-import ch.hslu.newcmpproject.entity.UpdateUsernameRequest
-import ch.hslu.newcmpproject.entity.UserSimple
+import ch.hslu.newcmpproject.domain.entity.Token
+import ch.hslu.newcmpproject.domain.entity.serverRequests.CreateUserRequest
+import ch.hslu.newcmpproject.domain.entity.serverRequests.LoginRequest
+import ch.hslu.newcmpproject.domain.entity.serverRequests.UpdatePasswordRequest
+import ch.hslu.newcmpproject.domain.entity.serverRequests.UpdateUsernameRequest
+import ch.hslu.newcmpproject.domain.entity.serverRequests.UserSimple
 import ch.hslu.newcmpproject.network.SERVER_IP
 import io.ktor.client.call.body
 import io.ktor.client.request.delete
@@ -84,9 +84,12 @@ class UserApi {
         val response = ApiClient.client.put("${SERVER_IP}/user/username") {
             header("Authorization", "Bearer ${token.value}")
             contentType(ContentType.Application.Json)
-            setBody(UpdateUsernameRequest(
-                userId = userId,
-                username = newUsername))
+            setBody(
+                UpdateUsernameRequest(
+                    userId = userId,
+                    username = newUsername
+                )
+            )
         }
 
         if (response.status != HttpStatusCode.OK)

@@ -5,7 +5,7 @@ import app.cash.sqldelight.async.coroutines.awaitAsOne
 import app.cash.sqldelight.async.coroutines.awaitAsOneOrNull
 import ch.hslu.cmpproject.cache.AppDatabaseQueries
 import ch.hslu.newcmpproject.cache.database.mapper.UserMapper
-import ch.hslu.newcmpproject.entity.User
+import ch.hslu.newcmpproject.domain.entity.User
 import ch.hslu.newcmpproject.security.PasswordService
 
 class UserDao(private val queries: AppDatabaseQueries) {

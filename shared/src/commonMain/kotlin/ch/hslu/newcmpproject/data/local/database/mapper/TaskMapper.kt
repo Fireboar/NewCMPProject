@@ -1,6 +1,6 @@
-package ch.hslu.newcmpproject.data.mapper
+package ch.hslu.newcmpproject.data.local.database.mapper
 
-import ch.hslu.newcmpproject.entity.Task
+import ch.hslu.newcmpproject.domain.entity.Task
 
 object TaskMapper {
 

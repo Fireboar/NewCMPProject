@@ -1,4 +1,4 @@
-package ch.hslu.newcmpproject.network.api
+package ch.hslu.newcmpproject.data.remote.api
 
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.HttpTimeout

@@ -1,7 +1,10 @@
-package ch.hslu.newcmpproject.entity
+package ch.hslu.newcmpproject.cache
 
+
+import ch.hslu.newcmpproject.domain.entity.serverRequests.UserSimple
 import com.russhwolf.settings.Settings
 import kotlinx.serialization.json.Json
+
 class UserStorage {
     private val settings = Settings()
     private val json = Json { ignoreUnknownKeys = true }

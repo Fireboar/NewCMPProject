@@ -2,11 +2,11 @@ package ch.hslu.newcmpproject.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import ch.hslu.newcmpproject.cache.UserRepository
-import ch.hslu.newcmpproject.entity.TokenStorage
-import ch.hslu.newcmpproject.entity.UserSimple
-import ch.hslu.newcmpproject.entity.UserStorage
-import ch.hslu.newcmpproject.network.auth.AuthService
+import ch.hslu.newcmpproject.cache.TokenStorage
+import ch.hslu.newcmpproject.cache.UserStorage
+import ch.hslu.newcmpproject.domain.entity.serverRequests.UserSimple
+import ch.hslu.newcmpproject.domain.repository.UserRepository
+import ch.hslu.newcmpproject.network.AuthService
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch

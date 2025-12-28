@@ -1,7 +1,7 @@
-package ch.hslu.newcmpproject.network.api
+package ch.hslu.newcmpproject.data.remote.api
 
-import ch.hslu.newcmpproject.entity.Task
-import ch.hslu.newcmpproject.entity.Token
+import ch.hslu.newcmpproject.domain.entity.Task
+import ch.hslu.newcmpproject.domain.entity.Token
 import ch.hslu.newcmpproject.network.SERVER_IP
 import io.ktor.client.call.body
 import io.ktor.client.request.delete

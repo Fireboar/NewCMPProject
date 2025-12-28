@@ -1,9 +1,9 @@
 package ch.hslu.newcmpproject.network
 
-import ch.hslu.newcmpproject.data.database.TaskDao
-import ch.hslu.newcmpproject.network.api.ApiClient
-import ch.hslu.newcmpproject.network.api.TaskApi
-import ch.hslu.newcmpproject.network.auth.AuthService
+import ch.hslu.newcmpproject.data.local.database.TaskDao
+import ch.hslu.newcmpproject.data.remote.api.ApiClient
+import ch.hslu.newcmpproject.data.remote.api.TaskApi
+import ch.hslu.newcmpproject.network.AuthService
 import io.ktor.client.request.get
 import io.ktor.http.HttpStatusCode
 import kotlinx.coroutines.flow.MutableStateFlow

@@ -1,10 +1,11 @@
-package ch.hslu.newcmpproject.network.auth
+package ch.hslu.newcmpproject.network
 
-import ch.hslu.newcmpproject.entity.Token
-import ch.hslu.newcmpproject.entity.TokenStorage
-import ch.hslu.newcmpproject.entity.UserSimple
-import ch.hslu.newcmpproject.entity.UserStorage
-import ch.hslu.newcmpproject.entity.decodeBase64UrlToString
+import ch.hslu.newcmpproject.cache.TokenStorage
+import ch.hslu.newcmpproject.cache.UserStorage
+import ch.hslu.newcmpproject.data.remote.api.AuthApi
+import ch.hslu.newcmpproject.domain.entity.Token
+import ch.hslu.newcmpproject.domain.entity.decodeBase64UrlToString
+import ch.hslu.newcmpproject.domain.entity.serverRequests.UserSimple
 import kotlinx.serialization.json.Json
 
 class AuthService(

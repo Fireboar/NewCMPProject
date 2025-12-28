@@ -1,11 +1,11 @@
-package ch.hslu.newcmpproject.data.database
+package ch.hslu.newcmpproject.data.local.database
 
 import app.cash.sqldelight.async.coroutines.awaitAsList
 import app.cash.sqldelight.async.coroutines.awaitAsOne
 import app.cash.sqldelight.async.coroutines.awaitAsOneOrNull
 import ch.hslu.cmpproject.cache.AppDatabaseQueries
-import ch.hslu.newcmpproject.data.mapper.TaskMapper
-import ch.hslu.newcmpproject.entity.Task
+import ch.hslu.newcmpproject.data.local.database.mapper.TaskMapper
+import ch.hslu.newcmpproject.domain.entity.Task
 
 class TaskDao(
     private val queries: AppDatabaseQueries

@@ -1,4 +1,4 @@
-package ch.hslu.newcmpproject.entity
+package ch.hslu.newcmpproject.domain.entity
 
 import kotlinx.datetime.LocalDateTime
 import kotlinx.serialization.SerialName

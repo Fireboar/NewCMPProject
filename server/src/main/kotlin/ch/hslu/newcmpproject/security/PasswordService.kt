@@ -1,6 +1,6 @@
 package ch.hslu.newcmpproject.security
 
-import ch.hslu.newcmpproject.entity.User
+import ch.hslu.newcmpproject.domain.entity.User
 import java.security.MessageDigest
 import java.security.SecureRandom
 

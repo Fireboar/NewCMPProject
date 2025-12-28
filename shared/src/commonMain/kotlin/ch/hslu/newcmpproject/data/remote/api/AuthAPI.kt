@@ -1,8 +1,7 @@
-package ch.hslu.newcmpproject.network.auth
+package ch.hslu.newcmpproject.data.remote.api
 
-import ch.hslu.newcmpproject.entity.LoginRequest
-import ch.hslu.newcmpproject.entity.Token
-import ch.hslu.newcmpproject.network.api.ApiClient
+import ch.hslu.newcmpproject.domain.entity.Token
+import ch.hslu.newcmpproject.domain.entity.serverRequests.LoginRequest
 import io.ktor.client.call.body
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody

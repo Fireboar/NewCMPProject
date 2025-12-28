@@ -1,11 +1,11 @@
-package ch.hslu.newcmpproject.cache
+package ch.hslu.newcmpproject.domain.repository
 
-import ch.hslu.newcmpproject.data.database.TaskDao
-import ch.hslu.newcmpproject.entity.Task
-import ch.hslu.newcmpproject.entity.Token
-import ch.hslu.newcmpproject.network.auth.AuthService
+import ch.hslu.newcmpproject.data.local.database.TaskDao
+import ch.hslu.newcmpproject.domain.entity.Task
+import ch.hslu.newcmpproject.domain.entity.Token
 import ch.hslu.newcmpproject.network.SyncService
-import ch.hslu.newcmpproject.network.api.TaskApi
+import ch.hslu.newcmpproject.data.remote.api.TaskApi
+import ch.hslu.newcmpproject.network.AuthService
 
 class TaskRepository(
     private val taskDao: TaskDao,

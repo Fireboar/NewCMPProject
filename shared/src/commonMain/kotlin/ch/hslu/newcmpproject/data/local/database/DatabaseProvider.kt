@@ -1,4 +1,4 @@
-package ch.hslu.newcmpproject.data.database
+package ch.hslu.newcmpproject.data.local.database
 
 import app.cash.sqldelight.db.SqlDriver
 import ch.hslu.cmpproject.cache.AppDatabase

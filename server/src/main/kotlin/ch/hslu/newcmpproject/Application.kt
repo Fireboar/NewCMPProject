@@ -2,15 +2,18 @@ package ch.hslu.newcmpproject
 
 import app.cash.sqldelight.driver.jdbc.sqlite.JdbcSqliteDriver
 import ch.hslu.cmpproject.cache.AppDatabase
-import ch.hslu.newcmpproject.data.database.DatabaseProvider
-import ch.hslu.newcmpproject.data.database.TaskDao
 import ch.hslu.newcmpproject.cache.database.UserDao
-import ch.hslu.newcmpproject.entity.CreateUserRequest
-import ch.hslu.newcmpproject.entity.LoginRequest
-import ch.hslu.newcmpproject.entity.Task
-import ch.hslu.newcmpproject.entity.UpdatePasswordRequest
-import ch.hslu.newcmpproject.entity.UpdateUsernameRequest
-import ch.hslu.newcmpproject.entity.UserSimple
+import ch.hslu.newcmpproject.data.local.database.DatabaseProvider
+import ch.hslu.newcmpproject.data.local.database.TaskDao
+
+import ch.hslu.newcmpproject.domain.entity.Task
+import ch.hslu.newcmpproject.domain.entity.serverRequests.CreateUserRequest
+import ch.hslu.newcmpproject.domain.entity.serverRequests.LoginRequest
+
+import ch.hslu.newcmpproject.domain.entity.serverRequests.UpdatePasswordRequest
+import ch.hslu.newcmpproject.domain.entity.serverRequests.UpdateUsernameRequest
+import ch.hslu.newcmpproject.domain.entity.serverRequests.UserSimple
+
 import ch.hslu.newcmpproject.security.PasswordService
 import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
@@ -121,19 +124,34 @@ suspend fun Application.module() {
     val passwordService = PasswordService()
 
 
+    // --- Admin-User anlegen falls nicht vorhanden ---
     val existingUser = userDao.getByUsername("admin")
     val adminId = existingUser?.id ?: userDao.insert(
         username = "admin",
-        password = "123",
+        password = "123",   // Nur für Dev/Test
         role = "ADMIN"
     )
+
+    // --- Beispiel-Task anlegen falls noch keiner existiert ---
+    val tasks = taskDao.getAll(adminId)
+    if (tasks.isEmpty()) {
+        val defaultTask = Task(
+            id = 0, // DB setzt Auto-Increment
+            userId = adminId,
+            title = "Server-Task",
+            description = "Dies ist ein Default-Task",
+            dueDate = "12.12.2025",
+            dueTime = "12:00",
+            status = "To Do"
+        )
+        taskDao.insert(defaultTask)
+    }
 
     // Folgender Code
 
     fun JWTPrincipal.isAdmin(): Boolean =
         payload.getClaim("role").asString() == "ADMIN"
 
-    // Folgender Code
 
     routing {
         post("/login") {

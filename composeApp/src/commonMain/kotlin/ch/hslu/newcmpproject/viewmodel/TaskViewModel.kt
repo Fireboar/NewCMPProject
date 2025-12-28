@@ -1,18 +1,12 @@
 package ch.hslu.newcmpproject.viewmodel
 
-import androidx.compose.runtime.LaunchedEffect
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import ch.hslu.newcmpproject.cache.TaskRepository
-import ch.hslu.newcmpproject.entity.Task
-import ch.hslu.newcmpproject.entity.TokenStorage
-import ch.hslu.newcmpproject.entity.UserSimple
-import ch.hslu.newcmpproject.entity.UserStorage
+import ch.hslu.newcmpproject.domain.repository.TaskRepository
+import ch.hslu.newcmpproject.domain.entity.Task
 import ch.hslu.newcmpproject.network.SyncService
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 
 class TaskViewModel(

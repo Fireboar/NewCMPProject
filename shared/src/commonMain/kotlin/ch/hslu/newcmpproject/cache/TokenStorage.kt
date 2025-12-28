@@ -1,7 +1,6 @@
-package ch.hslu.newcmpproject.entity
+package ch.hslu.newcmpproject.cache
 
 import com.russhwolf.settings.Settings
-import kotlinx.serialization.json.Json
 
 class TokenStorage {
     private val settings = Settings()

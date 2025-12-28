@@ -1,9 +1,9 @@
-package ch.hslu.newcmpproject.cache
+package ch.hslu.newcmpproject.domain.repository
 
-import ch.hslu.newcmpproject.entity.Token
-import ch.hslu.newcmpproject.entity.UserSimple
-import ch.hslu.newcmpproject.network.auth.AuthService
-import ch.hslu.newcmpproject.network.api.UserApi
+import ch.hslu.newcmpproject.data.remote.api.UserApi
+import ch.hslu.newcmpproject.domain.entity.Token
+import ch.hslu.newcmpproject.domain.entity.serverRequests.UserSimple
+import ch.hslu.newcmpproject.network.AuthService
 
 class UserRepository(
     private val userApi: UserApi,
@@ -61,4 +61,3 @@ class UserRepository(
         return userApi.deleteUser(currentToken, userId)
     }
 }
-

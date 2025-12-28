@@ -22,8 +22,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import ch.hslu.newcmpproject.entity.Task
-import ch.hslu.newcmpproject.entity.toLocalDateTimeOrNull
+import ch.hslu.newcmpproject.domain.entity.Task
+import ch.hslu.newcmpproject.domain.entity.toLocalDateTimeOrNull
 import ch.hslu.newcmpproject.viewmodel.TaskViewModel
 
 
